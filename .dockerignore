@@ -1,0 +1,12 @@
+node_modules
+dist
+.angular
+.git
+.vscode
+coverage
+.tmp
+tmp
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+*.log
