@@ -5,6 +5,7 @@ import { CardAccountt } from './components/card-accountt/card-account';
 // import { Cards } from './components/cards/cards';
 
 @Component({
+  standalone: true,
   selector: 'app-root',
   imports: [RouterOutlet, Header, CardAccountt],
   templateUrl: './app.component.html',
