@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+.segoe {
+  font-family: "Segoe UI", SegoeUI, "Helvetica Neue", Arial, sans-serif;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
