@@ -41,3 +41,28 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+
+ <!-- CARROSEL DE CARDS  -->
+    <!-- <div class="grid grid-cols-3 w-full min-h-screen gap-7 px-6">
+        <app-cards
+        titulo="Simulador | Admissão"
+        desc="Através deste serviço, você pode fazer uma simulação de custos e orçamento, através de alguns calculos de salário + encargos e alguns paramêtros nossos, de acordo com uma admissão de um funcionário"
+        titulo_botao="Simular"
+        rota="">
+        </app-cards>
+
+        <app-cards
+        titulo="Simulador | Demissão"
+        desc="Através deste serviço, você pode fazer uma simulação de custos e orçamento, através de alguns calculos de salário + encargos e alguns paramêtros nossos, de acordo com uma demissão de um funcionário"
+        titulo_botao="Simular"
+        rota="">
+        </app-cards>
+
+        <app-cards
+        titulo="Simulador | Mérito & Promoção"
+        desc="Através deste serviço, você pode fazer uma simulação de custos e orçamento, através de alguns calculos de salário + encargos e alguns paramêtros nossos, de acordo com mérito e promoção de um funcionário"
+        titulo_botao="Simular"
+        rota="">
+        </app-cards>
+    </div> -->

@@ -1,29 +1,44 @@
+import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
-import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: 'app-card-accountt',
   standalone: true,
+  selector: 'app-card-accountt',
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
-  templateUrl: './card-account.html'
+  templateUrl: './card-account.html',
 })
-
-// ng serve --no-ssr
-
-
 export class CardAccountt {
+  private fb = inject(FormBuilder);
+
+  @Output() loginSubmit = new EventEmitter<{ email: string; password: string }>();
+
   submitted = false;
-  email = new FormControl('', [Validators.required, Validators.email]);
-  onSubmit() {
+  error = false; // você pode controlar do pai também, mas deixei aqui pra não quebrar nada
+
+  form = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required],
+  });
+
+  submit(): void {
     this.submitted = true;
+    this.error = false;
 
-    // força a validação aparecer ao clicar no botão
-    this.email.markAsTouched();
+    if (this.form.invalid) return;
 
-    if (this.email.invalid) return;
+    this.loginSubmit.emit(this.form.getRawValue());
+  }
 
+  reset(): void {
+    this.submitted = false;
+    this.error = false;
+    this.form.reset();
+  }
+
+  // opcional: se o pai quiser setar erro
+  setInvalidCredentials(): void {
+    this.error = true;
   }
 }
