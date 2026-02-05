@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { Header } from '../../components/header/header';
-import { CardAccountt } from '../../components/card-accountt/card-account';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -8,7 +7,7 @@ import { RouterModule } from '@angular/router';
 @Component({
   standalone: true,
   selector: 'app-account',
-  imports: [Header, CardAccountt, CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [Header, CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './account.component.html'
 })
 
