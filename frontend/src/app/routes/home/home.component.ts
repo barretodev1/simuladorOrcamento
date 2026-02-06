@@ -1,6 +1,7 @@
 import { Component, ViewChild, inject, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 import { Header } from '../../components/header/header';
 import { CardAccountt } from '../../components/card-accountt/card-account';
 import { ApiService } from '../../services/api.service';
@@ -18,21 +19,28 @@ export class HomeComponent implements AfterViewInit {
 
   @ViewChild(CardAccountt) card!: CardAccountt;
 
+  loading = false; // ✅ novo
+
   ngAfterViewInit(): void {
     const email = this.route.snapshot.queryParamMap.get('email');
 
     if (email && this.card) {
-      // passa o email para o componente de login
       this.card.setEmail(email);
     }
   }
 
   onLogin(payload: { email: string; password: string }): void {
-    this.api.login(payload).subscribe({
-      next: () => this.router.navigate(['/simulador_de_gastos']),
-      error: () => {
-        this.card?.setInvalidCredentials();
-      },
-    });
+    if (this.loading) return; // evita duplo clique
+
+    this.loading = true;
+
+    this.api.login(payload)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => this.router.navigate(['/simulador_de_gastos']),
+        error: () => {
+          this.card?.setInvalidCredentials();
+        },
+      });
   }
 }

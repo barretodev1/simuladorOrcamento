@@ -5,10 +5,11 @@
         <app-header />
     </div>
 
-    
+
     <!-- TEMPLATE DE LOGIN E CRIAR CONTA -->
     <div class="flex flex-row justify-center items-center mt-4 2xl:mt-20">
-        <app-card-accountt (loginSubmit)="onLogin($event)"></app-card-accountt>
+        <app-card-accountt [loading]="loading" (loginSubmit)="onLogin($event)"></app-card-accountt>
+
         <img class="w-xl h-130 flex mt-3" src="Finance.svg" alt="">
     </div>
 

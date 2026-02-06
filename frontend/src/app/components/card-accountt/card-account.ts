@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Output, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -10,8 +10,8 @@ import { RouterModule } from '@angular/router';
   templateUrl: './card-account.html',
 })
 export class CardAccountt {
+  @Input() loading = false; // ✅ novo
   private fb = inject(FormBuilder);
-
   @Output() loginSubmit = new EventEmitter<{ email: string; password: string }>();
 
   submitted = false;

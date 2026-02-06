@@ -9,12 +9,10 @@
   <section class="flex mt-3 grid md:grid-cols-2 items-stretch">
     <!-- CARD: LOGIN -->
     <div
-      class="w-xl h-full rounded-xl border border-zinc-800 bg-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] flex flex-col"
-    >
+      class="w-xl h-full rounded-xl border border-zinc-800 bg-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] flex flex-col">
       <div class="border-b border-zinc-800 px-6 py-5">
         <span
-          class="inline-flex items-center gap-2 rounded-full border border-zinc-800 mb-4 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-300"
-        >
+          class="inline-flex items-center gap-2 rounded-full border border-zinc-800 mb-4 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-300">
           <span class="h-2 w-2 rounded-full bg-sky-500"></span>
           Entrar no Simulador
         </span>
@@ -29,24 +27,17 @@
             <!-- Email -->
             <div class="space-y-2">
               <label class="text-sm font-medium text-zinc-200">Email</label>
-              <input
-                type="email"
-                placeholder="voce@exemplo.com"
+              <input type="email" placeholder="voce@exemplo.com"
                 class="h-10 w-full rounded-md outline-none border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-50"
-                formControlName="email"
-              />
+                formControlName="email" />
 
-              <p
-                class="mt-1 text-sm text-red-500"
-                *ngIf="(submitted || form.controls.email.touched) && form.controls.email.hasError('required')"
-              >
+              <p class="mt-1 text-sm text-red-500"
+                *ngIf="(submitted || form.controls.email.touched) && form.controls.email.hasError('required')">
                 Email obrigatório.
               </p>
 
-              <p
-                class="mt-1 text-sm text-red-500"
-                *ngIf="(submitted || form.controls.email.touched) && form.controls.email.hasError('email')"
-              >
+              <p class="mt-1 text-sm text-red-500"
+                *ngIf="(submitted || form.controls.email.touched) && form.controls.email.hasError('email')">
                 Email inválido.
               </p>
             </div>
@@ -54,34 +45,23 @@
             <!-- Senha -->
             <div class="space-y-2">
               <label class="text-sm font-medium text-zinc-200">Senha</label>
-              <input
-                type="password"
-                placeholder="••••••••"
+              <input type="password" placeholder="••••••••"
                 class="h-10 w-full outline-none rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-50"
-                formControlName="password"
-              />
+                formControlName="password" />
 
-              <p
-                class="mt-1 text-sm text-red-500"
-                *ngIf="(submitted || form.controls.password.touched) && form.controls.password.hasError('required')"
-              >
+              <p class="mt-1 text-sm text-red-500"
+                *ngIf="(submitted || form.controls.password.touched) && form.controls.password.hasError('required')">
                 Senha obrigatória.
               </p>
 
               <!-- RESET PASSWORD -->
               <div class="flex-col flex">
-                <button
-                  type="button"
-                  class="text-xs outline-none text-sky-400 hover:underline mt-1 text-left"
-                >
+                <button type="button" class="text-xs outline-none text-sky-400 hover:underline mt-1 text-left">
                   Esqueci minha senha
                 </button>
 
-                <button
-                  routerLink="/account"
-                  type="button"
-                  class="text-xs text-sky-400 outline-none hover:underline mt-1 text-left"
-                >
+                <button routerLink="/account" type="button"
+                  class="text-xs text-sky-400 outline-none hover:underline mt-1 text-left">
                   Criar uma conta
                 </button>
               </div>
@@ -91,27 +71,25 @@
           <!-- Ações (fixadas no fim + mesma “margem” do seu card) -->
           <div class="mt-auto pt-6 pb-1 flex items-center justify-between">
             <span
-              class="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-300"
-            >
+              class="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-300">
               <span class="h-2 w-2 rounded-full bg-sky-500"></span>
               Free tier
             </span>
 
             <div class="flex items-center gap-2">
-              <button
-                type="button"
-                (click)="reset()"
-                class="cursor-pointer hover:bg-gray-800 transition-all 3500 ease-in-out inline-flex h-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 px-4 text-sm text-zinc-50"
-              >
+              <button type="button" (click)="reset()" [disabled]="loading"
+                class="cursor-pointer hover:bg-gray-800 transition-all duration-300 ease-in-out inline-flex h-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 px-4 text-sm text-zinc-50 disabled:opacity-50">
                 Cancelar
               </button>
 
-              <button
-                type="submit"
-                [disabled]="form.invalid"
-                class="inline-flex cursor-pointer transition-all 3500 ease-in-out hover:bg-gray-400 h-9 items-center justify-center rounded-md bg-zinc-50 px-4 text-sm text-zinc-950 disabled:opacity-50"
-              >
-                Confirmar
+              <button type="submit" [disabled]="form.invalid || loading"
+                class="inline-flex cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-400 h-9 items-center justify-center rounded-md bg-zinc-50 px-4 text-sm text-zinc-950 disabled:opacity-50">
+                <span *ngIf="!loading">Confirmar</span>
+
+                <span *ngIf="loading" class="inline-flex items-center gap-2">
+                  <span class="h-4 w-4 rounded-full border-2 border-zinc-400 border-t-transparent animate-spin"></span>
+                  Aguardando...
+                </span>
               </button>
             </div>
           </div>
