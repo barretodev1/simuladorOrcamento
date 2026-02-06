@@ -14,4 +14,21 @@ export class ApiService {
   login(data: { email: string; password: string }): Observable<any> {
     return this.http.post(`${this.API_URL}/auth/login`, data);
   }
+
+  // ===== RECOVERY =====
+  sendRecoveryCode(email: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/auth/recovery/send-code`, { email });
+  }
+
+  verifyRecoveryCode(email: string, code: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/auth/recovery/verify-code`, { email, code });
+  }
+
+  resetPassword(email: string, resetToken: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/auth/recovery/reset-password`, {
+      email,
+      resetToken,
+      newPassword,
+    });
+  }
 }
