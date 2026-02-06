@@ -15,18 +15,28 @@ export class CardAccountt {
   @Output() loginSubmit = new EventEmitter<{ email: string; password: string }>();
 
   submitted = false;
-  error = false; // você pode controlar do pai também, mas deixei aqui pra não quebrar nada
+  error = false;
 
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
   });
 
+  // ✅ usado pelo HomeComponent para preencher o email vindo de /account
+  setEmail(email: string): void {
+    this.form.controls.email.setValue(email);
+    this.form.controls.email.markAsTouched();
+    this.error = false; // limpa erro visual se existir
+  }
+
   submit(): void {
     this.submitted = true;
     this.error = false;
 
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     this.loginSubmit.emit(this.form.getRawValue());
   }
@@ -37,7 +47,6 @@ export class CardAccountt {
     this.form.reset();
   }
 
-  // opcional: se o pai quiser setar erro
   setInvalidCredentials(): void {
     this.error = true;
   }

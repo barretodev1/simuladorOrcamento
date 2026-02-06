@@ -48,9 +48,12 @@ app.post("/auth/register", async (req, res) => {
 
     return res.status(201).json({ user: result.rows[0] });
   } catch (e) {
-    return res.status(500).json({ message: "Erro no cadastro." });
-  }
-});
+      console.error("REGISTER ERROR:", e); // <-- importante
+      return res.status(500).json({
+      message: "Erro no cadastro.",
+      detail: e.message,
+  });
+}});
 
 // LOGIN - chamado pela sua tela /
 app.post("/auth/login", async (req, res) => {
