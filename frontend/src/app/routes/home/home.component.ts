@@ -5,6 +5,7 @@ import { finalize } from 'rxjs/operators';
 import { Header } from '../../components/header/header';
 import { CardAccountt } from '../../components/card-accountt/card-account';
 import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   standalone: true,
@@ -16,6 +17,7 @@ export class HomeComponent implements AfterViewInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private auth = inject(AuthService);
 
   @ViewChild(CardAccountt) card!: CardAccountt;
 
@@ -29,18 +31,19 @@ export class HomeComponent implements AfterViewInit {
     }
   }
 
-  onLogin(payload: { email: string; password: string }): void {
-    if (this.loading) return; // evita duplo clique
+  onLogin(payload: { email: string; password: string }) {
+    this.api.login(payload).subscribe({
+      next: (res: any) => {
+        this.auth.setToken(res.token);
 
-    this.loading = true;
+        const returnUrl =
+          this.route.snapshot.queryParamMap.get('returnUrl') || '/simulador_de_gastos';
 
-    this.api.login(payload)
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe({
-        next: () => this.router.navigate(['/simulador_de_gastos']),
-        error: () => {
-          this.card?.setInvalidCredentials();
-        },
-      });
+        this.router.navigateByUrl(returnUrl);
+      },
+      error: () => {
+        // tratar erro
+      }
+    });
   }
 }
