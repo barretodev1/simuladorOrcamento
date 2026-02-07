@@ -1,13 +1,17 @@
 import { CanActivateFn, Router } from '@angular/router';
-import { inject } from '@angular/core';
+import { inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from './auth.service';
 
 export const authGuard: CanActivateFn = (_route, state) => {
+  const platformId = inject(PLATFORM_ID);
+
+  if (!isPlatformBrowser(platformId)) return true;
+
   const auth = inject(AuthService);
   const router = inject(Router);
 
   if (auth.isLoggedIn()) return true;
 
-  // manda de volta pro login/home e guarda pra onde ele queria ir
   return router.createUrlTree(['/'], { queryParams: { returnUrl: state.url } });
 };
