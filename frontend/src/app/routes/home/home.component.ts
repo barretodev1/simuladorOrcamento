@@ -1,11 +1,18 @@
-import { Component, ViewChild, inject, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, inject, AfterViewInit, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs/operators';
+
 import { Header } from '../../components/header/header';
 import { CardAccountt } from '../../components/card-accountt/card-account';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../auth/auth.service';
+
+type LoginResponse = {
+  token?: string;
+  accessToken?: string;
+  access_token?: string;
+};
 
 @Component({
   standalone: true,
@@ -13,7 +20,7 @@ import { AuthService } from '../../auth/auth.service';
   imports: [CommonModule, RouterModule, Header, CardAccountt],
   templateUrl: './home.component.html',
 })
-export class HomeComponent implements AfterViewInit {
+export class HomeComponent implements OnInit, AfterViewInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -21,29 +28,57 @@ export class HomeComponent implements AfterViewInit {
 
   @ViewChild(CardAccountt) card!: CardAccountt;
 
-  loading = false; // ✅ novo
+  loading = false;
+
+  // ✅ true quando chegou aqui pelo "voltar/avançar" do navegador
+  private cameFromBackButton = false;
+
+  constructor() {
+    const nav = this.router.getCurrentNavigation();
+    this.cameFromBackButton = nav?.trigger === 'popstate';
+  }
+
+  ngOnInit(): void {
+    // ✅ Auto-ir pro simulador APENAS quando for um load "normal"
+    // (abrir app / refresh / entrar pela URL), e NÃO quando for back
+    if (this.auth.isLoggedIn() && !this.cameFromBackButton) {
+      const returnUrl =
+        this.route.snapshot.queryParamMap.get('returnUrl') || '/simulador_de_gastos';
+
+      this.router.navigateByUrl(returnUrl);
+    }
+  }
 
   ngAfterViewInit(): void {
     const email = this.route.snapshot.queryParamMap.get('email');
-
     if (email && this.card) {
       this.card.setEmail(email);
     }
   }
 
-  onLogin(payload: { email: string; password: string }) {
-    this.api.login(payload).subscribe({
-      next: (res: any) => {
-        this.auth.setToken(res.token);
+  onLogin(payload: { email: string; password: string }): void {
+    if (this.loading) return;
 
-        const returnUrl =
-          this.route.snapshot.queryParamMap.get('returnUrl') || '/simulador_de_gastos';
+    this.loading = true;
 
-        this.router.navigateByUrl(returnUrl);
-      },
-      error: () => {
-        // tratar erro
-      }
-    });
+    this.api
+      .login(payload)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (res: LoginResponse) => {
+          const token = res?.token ?? res?.accessToken ?? res?.access_token;
+
+          // ✅ salva token pra manter logado
+          if (token) this.auth.setToken(token);
+
+          const returnUrl =
+            this.route.snapshot.queryParamMap.get('returnUrl') || '/simulador_de_gastos';
+
+          this.router.navigateByUrl(returnUrl);
+        },
+        error: () => {
+          this.card?.setInvalidCredentials();
+        },
+      });
   }
 }
