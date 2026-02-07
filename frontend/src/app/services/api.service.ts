@@ -15,6 +15,14 @@ export class ApiService {
     return this.http.post(`${this.API_URL}/auth/login`, data);
   }
 
+    sendRegisterCode(data: { name: string; email: string; password: string }): Observable<any> {
+    return this.http.post(`${this.API_URL}/auth/register/send-code`, data);
+  }
+
+  verifyRegisterCode(email: string, code: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/auth/register/verify-code`, { email, code });
+  }
+
   // ===== RECOVERY =====
   sendRecoveryCode(email: string): Observable<any> {
     return this.http.post(`${this.API_URL}/auth/recovery/send-code`, { email });

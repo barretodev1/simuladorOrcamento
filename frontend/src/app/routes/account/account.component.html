@@ -5,7 +5,7 @@
   <div class="flex items-center justify-center sm:px-2 lg:px-2 py-2 xl:px-2 py-4 2xl:mt-30">
     <!-- Container central responsivo -->
     <div class="w-full max-w-5xl gap-40 xl:flex items-center justify-center gap-10">
-      
+
       <!-- Coluna esquerda -->
       <main class="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:flex h-max flex-col">
         <h1 class="text-2xl sm:text-3xl xl:text-2xl segoe text-zinc-500">Criar Conta</h1>
@@ -15,8 +15,9 @@
 
         <section class="mt-4 xl:mt-2 flex h-xl">
           <!-- Card (responsivo) -->
-          <div class="w-full rounded-xl border border-zinc-800 bg-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] flex flex-col">
-            
+          <div
+            class="w-full rounded-xl border border-zinc-800 bg-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] flex flex-col">
+
             <div class="border-b border-zinc-800 mt-3 px-4 sm:px-6 py-4 sm:py-5 xl:py-2 py-1">
               <h2 class="text-base font-semibold text-white">Criar conta</h2>
               <p class="mt-1 text-sm text-zinc-400">
@@ -26,76 +27,103 @@
 
             <div class="px-4 flex flex-col py-4">
               <!-- MANTÉM: formGroup + ngSubmit -->
-              <form class="flex flex-col h-full" [formGroup]="form" (ngSubmit)="onSubmit()">
+              <form class="flex flex-col h-full" [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="step === 'details'">
 
-                <!-- Campos (estilo do 2º) -->
                 <div class="space-y-5">
-                  
+
                   <!-- Usuário -->
                   <div class="space-y-3 gap-sm flex flex-col">
                     <label class="text-sm font-medium text-zinc-200">Usuário</label>
-                    <input
-                      type="text"
-                      placeholder="Seu usuário"
+                    <input type="text" placeholder="Seu usuário"
                       class="h-10 w-full outline-none rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-50"
-                      formControlName="name"
-                    />
+                      formControlName="name" />
                   </div>
 
                   <!-- Email -->
                   <div class="space-y-2 gap-sm flex flex-col">
                     <label class="text-sm font-medium text-zinc-200">Email</label>
-                    <input
-                      type="email"
-                      placeholder="voce@exemplo.com"
+                    <input type="email" placeholder="voce@exemplo.com"
                       class="h-10 w-full rounded-md outline-none border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-50"
-                      formControlName="email"
-                    />
-
-                    <!-- MANTÉM: sua msg de erro -->
-                    <p class="text-sm text-red-500" *ngIf="errorMsg">{{ errorMsg }}</p>
+                      formControlName="email" />
                   </div>
 
                   <!-- Senha -->
                   <div class="space-y-2 gap-sm flex flex-col">
                     <label class="text-sm font-medium text-zinc-200">Senha</label>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
+                    <input type="password" placeholder="••••••••"
                       class="h-10 w-full rounded-md outline-none border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-50"
-                      formControlName="password"
-                    />
+                      formControlName="password" />
                   </div>
+
+                  <p class="text-sm text-red-500" *ngIf="errorMsg">{{ errorMsg }}</p>
+                  <p class="text-sm text-zinc-400" *ngIf="infoMsg">{{ infoMsg }}</p>
                 </div>
 
-                <!-- Ações (estilo do 2º) -->
                 <div class="mt-6 flex items-center justify-between">
                   <span
-                    class="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-300"
-                  >
+                    class="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-300">
                     <span class="h-2 w-2 rounded-full bg-sky-500"></span>
                     Free tier
                   </span>
 
                   <div class="flex items-center gap-2">
-                    <button
-                      type="button"
-                      (click)="cancel()"
-                      class="cursor-pointer hover:bg-gray-800 transition-all duration-300 ease-in-out inline-flex h-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 px-4 text-sm text-zinc-50"
-                    >
+                    <button type="button" (click)="cancel()"
+                      class="cursor-pointer hover:bg-gray-800 transition-all duration-300 ease-in-out inline-flex h-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 px-4 text-sm text-zinc-50">
                       Cancelar
                     </button>
 
-                    <button
-                      type="submit"
-                      [disabled]="form.invalid || loading"
-                      class="inline-flex cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-400 h-9 items-center justify-center rounded-md bg-zinc-50 px-4 text-sm text-zinc-950 disabled:opacity-50"
-                    >
-                      {{ loading ? 'Salvando...' : 'Confirmar' }}
+                    <button type="submit" [disabled]="form.invalid || loading"
+                      class="inline-flex cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-400 h-9 items-center justify-center rounded-md bg-zinc-50 px-4 text-sm text-zinc-950 disabled:opacity-50">
+                      {{ loading ? 'Enviando...' : 'Confirmar' }}
                     </button>
                   </div>
                 </div>
               </form>
+
+              <!-- ===== ETAPA: CÓDIGO ===== -->
+              <form class="flex flex-col h-full" [formGroup]="codeForm" (ngSubmit)="onVerifyCode()"
+                *ngIf="step === 'code'">
+
+                <div class="space-y-5">
+                  <div class="space-y-2 flex flex-col">
+                    <p class="text-sm text-zinc-300">
+                      Digite o código de 6 dígitos enviado para:
+                      <span class="text-zinc-100 font-semibold">{{ pendingEmail }}</span>
+                    </p>
+                  </div>
+
+                  <div class="space-y-2 gap-sm flex flex-col">
+                    <label class="text-sm font-medium text-zinc-200">Código</label>
+                    <input type="text" inputmode="numeric" maxlength="6" placeholder="123456"
+                      class="h-10 w-full rounded-md outline-none border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-50 tracking-widest"
+                      formControlName="code" />
+                    <p class="text-xs text-zinc-500">O código expira em 10 minutos.</p>
+                  </div>
+
+                  <p class="text-sm text-red-500" *ngIf="errorMsg">{{ errorMsg }}</p>
+                  <p class="text-sm text-zinc-400" *ngIf="infoMsg">{{ infoMsg }}</p>
+                </div>
+
+                <div class="mt-6 flex items-center justify-between">
+                  <button type="button" (click)="resendCode()" [disabled]="loading"
+                    class="text-xs text-zinc-300 hover:text-zinc-50 underline disabled:opacity-50">
+                    Reenviar código
+                  </button>
+
+                  <div class="flex items-center gap-2">
+                    <button type="button" (click)="backToDetails()"
+                      class="cursor-pointer hover:bg-gray-800 transition-all duration-300 ease-in-out inline-flex h-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 px-4 text-sm text-zinc-50">
+                      Voltar
+                    </button>
+
+                    <button type="submit" [disabled]="codeForm.invalid || loading"
+                      class="inline-flex cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-400 h-9 items-center justify-center rounded-md bg-zinc-50 px-4 text-sm text-zinc-950 disabled:opacity-50">
+                      {{ loading ? 'Validando...' : 'Confirmar' }}
+                    </button>
+                  </div>
+                </div>
+              </form>
+
             </div>
           </div>
         </section>

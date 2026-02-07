@@ -5,6 +5,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { Resend } = require("resend");
 const pool = require("./db");
+const { sendEmail } = require("./mailer");
+
 
 const app = express();
 
@@ -25,26 +27,46 @@ function generate6DigitCode() {
 }
 
 async function sendRecoveryEmail(toEmail, code) {
-  if (!resend) {
-    console.log("[RECOVERY CODE DEV]", toEmail, "=>", code);
+  const subject = "Código de recuperação de senha";
+  const html = `
+    <div style="font-family: Arial, sans-serif;">
+      <h2>Recuperação de senha</h2>
+      <p>Seu código é:</p>
+      <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">${code}</p>
+      <p>Esse código expira em 10 minutos.</p>
+    </div>
+  `;
+
+  await sendEmail({ to: toEmail, subject, html });
+}
+
+
+async function sendRegisterEmail(toEmail, code) {
+  const subject = "Código para confirmar seu cadastro";
+  const html = `
+    <div style="font-family: Arial, sans-serif;">
+      <h2>Confirmar criação de conta</h2>
+      <p>Seu código é:</p>
+      <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">${code}</p>
+      <p>Esse código expira em 10 minutos.</p>
+    </div>
+  `;
+
+  // 1) tenta Resend se estiver configurado
+  if (resend && process.env.MAIL_FROM) {
+    await resend.emails.send({
+      from: process.env.MAIL_FROM,
+      to: [toEmail],
+      subject,
+      html,
+    });
     return;
   }
-  if (!process.env.MAIL_FROM) throw new Error("MAIL_FROM não configurado no .env");
 
-  await resend.emails.send({
-    from: process.env.MAIL_FROM,
-    to: [toEmail],
-    subject: "Código de recuperação de senha",
-    html: `
-      <div style="font-family: Arial, sans-serif;">
-        <h2>Recuperação de senha</h2>
-        <p>Seu código é:</p>
-        <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">${code}</p>
-        <p>Esse código expira em 10 minutos.</p>
-      </div>
-    `,
-  });
+  // 2) fallback: SMTP (nodemailer)
+  await sendEmail({ to: toEmail, subject, html });
 }
+
 
 // ==========================
 // HEALTHCHECK
@@ -136,6 +158,152 @@ app.post("/auth/login", async (req, res) => {
     return res.status(500).json({ message: "Erro no login.", detail: e.message });
   }
 });
+
+// ==========================
+// CADASTRO COM CÓDIGO (EMAIL)
+// ==========================
+
+// 1) Envia código para confirmar cadastro
+app.post("/auth/register/send-code", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Nome, email e senha são obrigatórios." });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Senha deve ter no mínimo 6 caracteres." });
+    }
+
+    // já existe user?
+    const exists = await pool.query("SELECT id FROM public.users WHERE email=$1", [email]);
+    if (exists.rowCount > 0) {
+      return res.status(409).json({ message: "Email já cadastrado. Faça login." });
+    }
+
+    // anti-spam simples: 1 envio por minuto
+    const last = await pool.query(
+      `SELECT created_at
+       FROM public.register_verification_codes
+       WHERE email=$1
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [email]
+    );
+
+    if (last.rowCount > 0) {
+      const lastDate = new Date(last.rows[0].created_at);
+      if (Date.now() - lastDate.getTime() < 60_000) {
+        return res.status(429).json({ message: "Aguarde um pouco antes de solicitar outro código." });
+      }
+    }
+
+    const code = generate6DigitCode();
+    const code_hash = await bcrypt.hash(code, 10);
+    const password_hash = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      `INSERT INTO public.register_verification_codes (email, name, password_hash, code_hash, expires_at)
+       VALUES ($1,$2,$3,$4, now() + interval '10 minutes')`,
+      [email, name, password_hash, code_hash]
+    );
+
+    await sendRegisterEmail(email, code);
+
+    return res.json({ ok: true, message: "Código enviado para o email." });
+  } catch (e) {
+    console.error("REGISTER SEND-CODE ERROR:", e);
+    return res.status(500).json({ message: "Erro ao enviar código.", detail: e.message });
+  }
+});
+
+// 2) Verifica código e cria o usuário
+app.post("/auth/register/verify-code", async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ message: "Email e código são obrigatórios." });
+    }
+
+    const recQ = await client.query(
+      `SELECT id, email, name, password_hash, code_hash, attempts, expires_at, consumed_at
+       FROM public.register_verification_codes
+       WHERE email=$1 AND consumed_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [email]
+    );
+
+    if (recQ.rowCount === 0) {
+      return res.status(404).json({ message: "Nenhum código ativo encontrado. Solicite novamente." });
+    }
+
+    const rec = recQ.rows[0];
+
+    if (new Date(rec.expires_at).getTime() < Date.now()) {
+      return res.status(410).json({ message: "Código expirado. Solicite um novo." });
+    }
+
+    if (rec.attempts >= 5) {
+      return res.status(429).json({ message: "Muitas tentativas. Solicite um novo código." });
+    }
+
+    const ok = await bcrypt.compare(code, rec.code_hash);
+
+    if (!ok) {
+      await client.query(
+        `UPDATE public.register_verification_codes
+         SET attempts = attempts + 1
+         WHERE id=$1`,
+        [rec.id]
+      );
+      return res.status(401).json({ message: "Código incorreto. Confira e tente novamente." });
+    }
+
+    await client.query("BEGIN");
+
+    // se alguém criou nesse meio tempo, bloqueia
+    const exists = await client.query("SELECT id FROM public.users WHERE email=$1", [email]);
+    if (exists.rowCount > 0) {
+      await client.query(
+        `UPDATE public.register_verification_codes SET consumed_at = now(), verified_at = now()
+         WHERE id=$1`,
+        [rec.id]
+      );
+      await client.query("COMMIT");
+      return res.status(409).json({ message: "Esse email já foi cadastrado. Faça login." });
+    }
+
+    // cria usuário com os dados pendentes
+    const result = await client.query(
+      `INSERT INTO public.users (name, email, password_hash)
+       VALUES ($1,$2,$3)
+       RETURNING id, name, email`,
+      [rec.name, rec.email, rec.password_hash]
+    );
+
+    // consome o código
+    await client.query(
+      `UPDATE public.register_verification_codes
+       SET verified_at = now(), consumed_at = now(), attempts = attempts + 1
+       WHERE id=$1`,
+      [rec.id]
+    );
+
+    await client.query("COMMIT");
+
+    return res.json({ ok: true, user: result.rows[0] });
+  } catch (e) {
+    try { await client.query("ROLLBACK"); } catch {}
+    console.error("REGISTER VERIFY-CODE ERROR:", e);
+    return res.status(500).json({ message: "Erro ao validar código.", detail: e.message });
+  } finally {
+    client.release();
+  }
+});
+
 
 // ==========================
 // RECUPERAÇÃO DE SENHA
