@@ -1,10 +1,10 @@
+import { MenuOptionsComponent } from '@/components/menu-options/menu-options.component';
 import { Component } from '@angular/core';
-import { Header } from '../../components/header/header';
 
 @Component({
   standalone: true,
   selector: 'app-simulador-page',
-  imports: [Header],
+  imports: [MenuOptionsComponent],
   templateUrl: './simulador-page.component.html',
 })
 export class SimuladorPageComponent {}

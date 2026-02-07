@@ -1,11 +1,10 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@plugin "tailwindcss-animate";
 
-.segoe {
-  font-family: "Segoe UI", SegoeUI, "Helvetica Neue", Arial, sans-serif;
+.quick {
+  font-family: "Quicksand", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
 }
 
-html, body {
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;
-}
