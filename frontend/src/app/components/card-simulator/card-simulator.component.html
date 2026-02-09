@@ -1,0 +1,107 @@
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 w-full">
+  <!-- CARD 1 -->
+  <div class="relative h-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <!-- Background decorativo -->
+    <div class="pointer-events-none absolute inset-0 opacity-70">
+      <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-zinc-50"></div>
+      <svg class="absolute -right-12 -top-10 h-72 w-72 opacity-15 text-emerald-700" viewBox="0 0 200 200">
+        <path fill="currentColor"
+          d="M44.7,-57.8C56.4,-53.4,63.3,-41.8,69,-29.1C74.7,-16.4,79.2,-2.6,76.1,9.4C73,21.4,62.3,31.6,51.2,42.8C40.1,54,28.5,66.2,15,69.7C1.5,73.2,-13.9,68,-27.9,61C-41.9,54,-54.5,45.2,-61.4,33C-68.2,20.8,-69.2,5.2,-65.8,-8.7C-62.4,-22.7,-54.6,-35,-44.2,-39.7C-33.8,-44.4,-20.8,-41.5,-7.2,-52C6.4,-62.6,12.8,-86.6,44.7,-57.8Z"
+          transform="translate(100 100)" />
+      </svg>
+    </div>
+
+    <div class="relative flex h-full flex-col p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm font-medium text-zinc-500">Simulação</p>
+          <h2 class="mt-1 text-xl font-semibold text-zinc-900">Por base recorrente</h2>
+        </div>
+
+        <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+          Recomendado
+        </span>
+      </div>
+
+      <p class="mt-3 text-sm text-zinc-600 max-w-[60ch]">
+        Simule a contratação usando os valores reais da base (folha, benefícios e encargos)
+        para estimativas mais precisas.
+      </p>
+
+      <div class="mt-5 grid grid-cols-2 gap-3">
+        <div class="rounded-xl border border-zinc-200 bg-white/70 p-3">
+          <p class="text-xs text-zinc-500">Precisão</p>
+          <p class="mt-1 text-sm font-semibold text-zinc-900">Alta</p>
+        </div>
+        <div class="rounded-xl border border-zinc-200 bg-white/70 p-3">
+          <p class="text-xs text-zinc-500">Fonte</p>
+          <p class="mt-1 text-sm font-semibold text-zinc-900">Base atual</p>
+        </div>
+      </div>
+
+      <div class="mt-auto pt-6 flex items-center justify-between">
+        <p class="text-xs text-zinc-500">Leva em conta recorrência e variações</p>
+
+        <button
+          class="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition cursor-pointer"
+          type="button"
+        >
+          Simular agora
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 2 -->
+  <div class="relative h-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <!-- Background decorativo -->
+    <div class="pointer-events-none absolute inset-0 opacity-70">
+      <div class="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-zinc-50"></div>
+      <svg class="absolute -left-16 -bottom-14 h-80 w-80 opacity-15 text-indigo-700" viewBox="0 0 200 200">
+        <path fill="currentColor"
+          d="M36.4,-59.6C47.4,-56.2,56.8,-47.4,61.1,-36.8C65.4,-26.2,64.6,-13.1,63.6,-0.6C62.6,12,61.4,24,56.7,34.4C52,44.8,43.8,53.6,33.6,60C23.4,66.4,11.7,70.5,-1.5,73.1C-14.7,75.7,-29.4,76.8,-40.7,70.2C-52.1,63.6,-60.1,49.3,-65.1,35C-70.1,20.7,-72.2,6.4,-69.2,-6.2C-66.2,-18.9,-58.2,-29.9,-48.1,-34.6C-38,-39.2,-25.8,-37.5,-15.2,-45.3C-4.6,-53.2,4.4,-70.6,36.4,-59.6Z"
+          transform="translate(100 100)" />
+      </svg>
+    </div>
+
+    <div class="relative flex h-full flex-col p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm font-medium text-zinc-500">Simulação</p>
+          <h2 class="mt-1 text-xl font-semibold text-zinc-900">Por custo médio</h2>
+        </div>
+
+        <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
+          Rápido
+        </span>
+      </div>
+
+      <p class="mt-3 text-sm text-zinc-600 max-w-[60ch]">
+        Estimativa rápida: defina um ticket médio (R$) e projete o impacto mensal e anual
+        da contratação.
+      </p>
+
+      <div class="mt-5 grid grid-cols-2 gap-3">
+        <div class="rounded-xl border border-zinc-200 bg-white/70 p-3">
+          <p class="text-xs text-zinc-500">Precisão</p>
+          <p class="mt-1 text-sm font-semibold text-zinc-900">Média</p>
+        </div>
+        <div class="rounded-xl border border-zinc-200 bg-white/70 p-3">
+          <p class="text-xs text-zinc-500">Entrada</p>
+          <p class="mt-1 text-sm font-semibold text-zinc-900">Ticket (R$)</p>
+        </div>
+      </div>
+
+      <div class="mt-auto pt-6 flex items-center justify-between">
+        <p class="text-xs text-zinc-500">Perfeito para cenários e comparações</p>
+
+        <button
+          class="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition cursor-pointer"
+          type="button"
+        >
+          Simular agora
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

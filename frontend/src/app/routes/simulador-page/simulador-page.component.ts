@@ -2,11 +2,12 @@ import { MenuOptionsComponent } from '@/components/menu-options/menu-options.com
 import { Component, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { KpiCardComponent } from '@/components/kpi-card/kpi-card.component';
+import { CardSimulatorComponent } from '@/components/card-simulator/card-simulator.component';
 
 @Component({
   standalone: true,
   selector: 'app-simulador-page',
-  imports: [MenuOptionsComponent, KpiCardComponent],
+  imports: [MenuOptionsComponent, KpiCardComponent, CardSimulatorComponent],
   templateUrl: './simulador-page.component.html',
 })
 export class SimuladorPageComponent {
