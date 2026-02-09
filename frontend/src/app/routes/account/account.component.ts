@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, PLATFORM_ID } from '@angular/core';
 import { Header } from '../../components/header/header';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -17,6 +17,7 @@ export class AccountComponent {
   private fb = inject(FormBuilder);
   private api = inject(ApiService);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
 
   step: Step = 'details';
 
@@ -35,6 +36,12 @@ export class AccountComponent {
   codeForm = this.fb.nonNullable.group({
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
   });
+
+  private saveUserName(name: string) {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('user_name', (name || '').trim());
+    }
+  }
 
   // 1) envia código
   onSubmit() {
@@ -82,6 +89,10 @@ export class AccountComponent {
       next: () => {
         this.loading = false;
 
+        // ✅ aqui o cadastro foi confirmado -> salva o nome digitado
+        const { name } = this.form.getRawValue();
+        this.saveUserName(name);
+
         // volta pro login com email preenchido
         this.router.navigate(['/'], { queryParams: { email: this.pendingEmail } });
       },
@@ -100,7 +111,6 @@ export class AccountComponent {
   }
 
   resendCode() {
-    // reenvia usando os mesmos dados já preenchidos
     this.errorMsg = '';
     this.infoMsg = '';
 
