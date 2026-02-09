@@ -1,19 +1,21 @@
 <div class="h-screen flex flex-col bg-gray-800 overflow-hidden">
   <!-- header não cresce -->
   <div class="shrink-0 bg-gray-800 text-white p-3 font-sans">
-    <h1 class="w-full text-center text-sm quick">Você está em um ambiente de teste</h1>
+    <h1 class="w-full text-center text-sm quick">
+      Você está em produção
+    </h1>
   </div>
 
   <!-- ocupa o resto da tela -->
   <div class="flex-1 min-h-0 bg-gray-300 rounded-t-3xl overflow-hidden flex">
-    
-    <!-- sidebar: altura do pai, NÃO h-screen -->
+
+    <!-- SIDEBAR (agora fixada à esquerda) -->
     <div class="w-90 h-full border-r border-gray-100 flex flex-col items-start justify-start p-5">
-      
+
       <!-- pesquisa -->
-      <div class="flex items-center gap-2 w-81">
+      <div class="flex items-center gap-2 w-full">
         <input type="text" placeholder="Buscar"
-          class="w-65 h-10 rounded-xl bg-gray-100 px-4 text-gray-700 placeholder:text-gray-500 outline-none" />
+          class="flex-1 h-10 rounded-xl bg-gray-100 px-4 text-gray-700 placeholder:text-gray-500 outline-none" />
 
         <button type="button"
           class="h-10 w-12 rounded-xl bg-gray-900 hover:bg-gray-600 cursor-pointer flex items-center justify-center"
@@ -26,8 +28,8 @@
         </button>
       </div>
 
-      <!-- menu: deixa crescer sem estourar a altura -->
-      <div class="mt-10 flex flex-col flex-1 min-h-0 overflow-hidden">
+      <!-- menu -->
+      <div class="mt-10 flex flex-col flex-1 min-h-0 overflow-hidden w-full">
         <app-menu-options imagePath="/inicio.svg" title="Menu Principal"></app-menu-options>
         <app-menu-options imagePath="/wallet.svg" title="Simular"></app-menu-options>
         <app-menu-options imagePath="/badge-dollar-sign.svg" title="Resultados"></app-menu-options>
@@ -35,11 +37,23 @@
         <app-menu-options imagePath="/settings.svg" title="Configurações"></app-menu-options>
       </div>
 
-      <!-- perfil no fim -->
-      <div class="mt-auto flex-row p-4">
+      <!-- perfil -->
+      <div class="mt-auto w-full p-4">
         <app-menu-options imagePath="/user.svg" [title]="user.name"></app-menu-options>
       </div>
 
+    </div>
+
+    <!-- ÁREA DE CONTEÚDO (lado direito) -->
+    <div class="flex-1 p-5 bg-gray-300 rounded-t-3xl overflow-hidden">
+      <div class="bg-stone-100 w-full rounded-2xl p-4">
+        <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <app-kpi-card dados="1.435", descricao="Headcount", titulo="Colaboradores"></app-kpi-card>
+          <app-kpi-card dados="R$: 135.456,34", descricao="Folha + Benefícios (Mensal)",></app-kpi-card>
+          <app-kpi-card dados="R$: 3.456,23", descricao="Custo Médio p/ HC"></app-kpi-card>
+          <app-kpi-card dados="+4,6%", descricao="Orçado x Realizado"></app-kpi-card>
+        </div>
+      </div>
     </div>
 
   </div>
