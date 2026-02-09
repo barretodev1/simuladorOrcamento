@@ -7,15 +7,15 @@
   </div>
 
   <!-- ocupa o resto da tela -->
-  <div class="flex-1 min-h-0 bg-gray-300 rounded-t-3xl overflow-hidden flex">
+  <div class="flex-1 min-h-0 bg-white rounded-t-3xl overflow-hidden flex">
 
     <!-- SIDEBAR (agora fixada à esquerda) -->
-    <div class="w-90 h-full border-r border-gray-100 flex flex-col items-start justify-start p-5">
+    <div class="w-90 h-full bg-white border-r border-gray-100 flex flex-col items-start justify-start p-5">
 
       <!-- pesquisa -->
-      <div class="flex items-center gap-2 w-full">
+      <div class="flex items-center bg-white gap-2 w-full">
         <input type="text" placeholder="Buscar"
-          class="flex-1 h-10 rounded-xl bg-gray-100 px-4 text-gray-700 placeholder:text-gray-500 outline-none" />
+          class="flex-1 h-10 rounded-xl bg-gray-300 px-4 text-gray-700 placeholder:text-gray-400 outline-none" />
 
         <button type="button"
           class="h-10 w-12 rounded-xl bg-gray-900 hover:bg-gray-600 cursor-pointer flex items-center justify-center"
@@ -29,7 +29,7 @@
       </div>
 
       <!-- menu -->
-      <div class="mt-10 flex flex-col flex-1 min-h-0 overflow-hidden w-full">
+      <div class="mt-4 flex flex-col flex-1 min-h-0 overflow-hidden w-full">
         <app-menu-options imagePath="/inicio.svg" title="Menu Principal"></app-menu-options>
         <app-menu-options imagePath="/wallet.svg" title="Simular"></app-menu-options>
         <app-menu-options imagePath="/badge-dollar-sign.svg" title="Resultados"></app-menu-options>
@@ -38,20 +38,20 @@
       </div>
 
       <!-- perfil -->
-      <div class="mt-auto w-full p-4">
+      <div class="mt-auto w-full p-3 bg-white">
         <app-menu-options imagePath="/user.svg" [title]="user.name"></app-menu-options>
       </div>
 
     </div>
 
     <!-- ÁREA DE CONTEÚDO (lado direito) -->
-    <div class="flex-1 p-5 bg-gray-300 rounded-t-3xl overflow-hidden">
-      <div class="bg-stone-100 w-full rounded-2xl p-4">
+    <div class="flex-1 bg-white rounded-t-3xl overflow-hidden">
+      <div class="w-full rounded-2xl p-4">
         <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          <app-kpi-card dados="1.435", descricao="Headcount", titulo="Colaboradores"></app-kpi-card>
-          <app-kpi-card dados="R$: 135.456,34", descricao="Folha + Benefícios (Mensal)",></app-kpi-card>
-          <app-kpi-card dados="R$: 3.456,23", descricao="Custo Médio p/ HC"></app-kpi-card>
-          <app-kpi-card dados="+4,6%", descricao="Orçado x Realizado"></app-kpi-card>
+          <app-kpi-card title="HC Atual" subLine="HC da última base atualizada"></app-kpi-card>
+          <app-kpi-card title="Total Mensal" subLine="Custo Folha - Mensal"></app-kpi-card>
+          <app-kpi-card title="Custo Médio | HC" subLine="Ticket Médio por Headcount"></app-kpi-card>
+          <app-kpi-card title="Projeção Anual" subLine="Forecast de Gastos"></app-kpi-card>
         </div>
       </div>
     </div>
