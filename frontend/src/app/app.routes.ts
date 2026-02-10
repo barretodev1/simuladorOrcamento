@@ -22,6 +22,14 @@ export const routes: Routes = [
     { path: 'simulador_de_gastos/resultados', component: ResultadosComponent },
     { path: 'simulador_de_gastos/historicos', component: HistoricoComponent },
     { path: 'simulador_de_gastos/configuracoes', component: ConfiguracoesComponent },
-    { path: 'simulador_de_gastos/simulacao_recorrente', component: SimulacaorecorrenteComponent },
-    { path: 'simulador_de_gastos/simulacao_medio', component: ConfiguracoesComponent }
+    {
+        path: 'simulador_de_gastos/simulacao_recorrente',
+        loadComponent: () => import('./routes/simulacaorecorrente/simulacaorecorrente.component')
+            .then(m => m.SimulacaorecorrenteComponent)
+    },
+    {
+        path: 'simulador_de_gastos/simulacao_medio',
+        loadComponent: () => import('./routes/simulacaomedia/simulacaomedia.component')
+            .then(m => m.SimulacaomediaComponent)
+    }
 ];

@@ -30,8 +30,7 @@
 
       <!-- menu -->
       <div class="mt-4 flex flex-col flex-1 min-h-0 overflow-hidden w-full">
-        <app-menu-options imagePath="/inicio.svg" title="Menu Principal"
-          route="/simulador_de_gastos"></app-menu-options>
+        <app-menu-options imagePath="/inicio.svg" title="Menu Principal"></app-menu-options>
 
         <app-menu-options imagePath="/badge-dollar-sign.svg" title="Resultados"
           route="/simulador_de_gastos/resultados"></app-menu-options>
@@ -44,8 +43,8 @@
       </div>
 
       <div class="mt-auto w-full p-3 bg-white">
-        <app-menu-options imagePath="/user.svg" [title]="user.name"
-          route="/simulador_de_gastos/conta"></app-menu-options>
+        <app-menu-options imagePath="/user.svg" [title]="user.name" route="/simulador_de_gastos/conta" [isUser]="true">
+        </app-menu-options>
       </div>
     </div>
 

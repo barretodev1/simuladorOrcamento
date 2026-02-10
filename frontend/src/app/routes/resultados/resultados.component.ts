@@ -1,11 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, inject, PLATFORM_ID } from '@angular/core';
+import { MenuOptionsComponent } from '@/components/menu-options/menu-options.component';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-resultados',
-  imports: [],
-  templateUrl: './resultados.component.html',
-  styleUrl: './resultados.component.css'
+  imports: [MenuOptionsComponent],
+  templateUrl: './resultados.component.html'
 })
 export class ResultadosComponent {
+  private platformId = inject(PLATFORM_ID);
 
+  user = { name: 'Usuário' };
+
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.user.name = localStorage.getItem('user_name') || 'Usuário';
+    }
+  }
 }

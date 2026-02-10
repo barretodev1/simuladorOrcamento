@@ -1,1 +1,53 @@
-<p>historico works!</p>
+<div class="h-screen flex flex-col bg-gray-800 overflow-hidden">
+  <!-- header não cresce -->
+  <div class="shrink-0 bg-gray-800 text-white p-3 font-sans">
+    <h1 class="w-full text-center text-sm quick">
+      Você está em produção
+    </h1>
+  </div>
+
+  <!-- ocupa o resto da tela -->
+  <div class="flex-1 min-h-0 bg-white rounded-t-3xl overflow-hidden flex">
+
+    <!-- SIDEBAR (agora fixada à esquerda) -->
+    <div class="w-90 h-full bg-white border-r border-gray-100 flex flex-col items-start justify-start p-5">
+
+      <!-- pesquisa -->
+      <div class="flex items-center bg-white gap-2 w-full">
+        <input type="text" placeholder="Buscar"
+          class="flex-1 h-10 rounded-xl bg-gray-300 px-4 text-gray-700 placeholder:text-gray-400 outline-none" />
+
+        <button type="button"
+          class="h-10 w-12 rounded-xl bg-gray-900 hover:bg-gray-600 cursor-pointer flex items-center justify-center"
+          aria-label="Buscar">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-white">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- menu -->
+      <div class="mt-4 flex flex-col flex-1 min-h-0 overflow-hidden w-full">
+        <app-menu-options imagePath="/inicio.svg" title="Menu Principal"
+          route="/simulador_de_gastos"></app-menu-options>
+
+        <app-menu-options imagePath="/badge-dollar-sign.svg" title="Resultados"
+          route="/simulador_de_gastos/resultados"></app-menu-options>
+
+        <app-menu-options imagePath="/history.svg" title="Históricos"></app-menu-options>
+
+        <app-menu-options imagePath="/settings.svg" title="Configurações"
+          route="/simulador_de_gastos/configuracoes"></app-menu-options>
+      </div>
+
+      <div class="mt-auto w-full p-3 bg-white">
+        <app-menu-options imagePath="/user.svg" [title]="user.name" route="/simulador_de_gastos/conta" [isUser]="true">
+        </app-menu-options>
+      </div>
+    </div>
+
+
+  </div>
+</div>

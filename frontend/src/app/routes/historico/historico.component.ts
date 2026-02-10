@@ -1,11 +1,22 @@
-import { Component } from '@angular/core';
+import { MenuOptionsComponent } from '@/components/menu-options/menu-options.component';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, inject, PLATFORM_ID } from '@angular/core';
 
 @Component({
   selector: 'app-historico',
-  imports: [],
-  templateUrl: './historico.component.html',
-  styleUrl: './historico.component.css'
+  imports: [MenuOptionsComponent],
+  templateUrl: './historico.component.html'
 })
-export class HistoricoComponent {
 
+
+export class HistoricoComponent {
+  private platformId = inject(PLATFORM_ID);
+
+  user = { name: 'Usuário' };
+
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.user.name = localStorage.getItem('user_name') || 'Usuário';
+    }
+  }
 }
