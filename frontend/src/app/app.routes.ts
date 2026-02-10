@@ -10,6 +10,7 @@ import { ConfiguracoesComponent } from './routes/configuracoes/configuracoes.com
 import { SimulacaorecorrenteComponent } from './routes/simulacaorecorrente/simulacaorecorrente.component';
 
 export const routes: Routes = [
+    { path: 'account/password', component: PasswordComponent },
     { path: '', component: HomeComponent },
     { path: 'account', component: AccountComponent },
     {
@@ -18,18 +19,34 @@ export const routes: Routes = [
         loadComponent: () =>
             import('./routes/simulador-page/simulador-page.component').then(m => m.SimuladorPageComponent),
     },
-    { path: 'account/password', component: PasswordComponent },
-    { path: 'simulador_de_gastos/resultados', component: ResultadosComponent },
-    { path: 'simulador_de_gastos/historicos', component: HistoricoComponent },
-    { path: 'simulador_de_gastos/configuracoes', component: ConfiguracoesComponent },
+    {
+        path: 'simulador_de_gastos/resultados',
+        canActivate: [authGuard],
+        loadComponent: () =>
+            import('./routes/resultados/resultados.component').then(m => m.ResultadosComponent),
+    },
+    {
+        path: 'simulador_de_gastos/historicos',
+        canActivate: [authGuard],
+        loadComponent: () =>
+            import('./routes/historico/historico.component').then(m => m.HistoricoComponent),
+    },
+    {
+        path: 'simulador_de_gastos/configuracoes',
+        canActivate: [authGuard],
+        loadComponent: () =>
+            import('./routes/configuracoes/configuracoes.component').then(m => m.ConfiguracoesComponent),
+    },
     {
         path: 'simulador_de_gastos/simulacao_recorrente',
-        loadComponent: () => import('./routes/simulacaorecorrente/simulacaorecorrente.component')
-            .then(m => m.SimulacaorecorrenteComponent)
+        canActivate: [authGuard],
+        loadComponent: () =>
+            import('./routes/simulacaorecorrente/simulacaorecorrente.component').then(m => m.SimulacaorecorrenteComponent)
     },
     {
         path: 'simulador_de_gastos/simulacao_medio',
-        loadComponent: () => import('./routes/simulacaomedia/simulacaomedia.component')
-            .then(m => m.SimulacaomediaComponent)
+        canActivate: [authGuard],
+        loadComponent: () =>
+            import('./routes/simulacaomedia/simulacaomedia.component').then(m => m.SimulacaomediaComponent)
     }
 ];
