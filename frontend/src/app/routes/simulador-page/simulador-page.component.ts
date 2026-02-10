@@ -10,6 +10,7 @@ import { CardSimulatorComponent } from '@/components/card-simulator/card-simulat
   imports: [MenuOptionsComponent, KpiCardComponent, CardSimulatorComponent],
   templateUrl: './simulador-page.component.html',
 })
+
 export class SimuladorPageComponent {
   private platformId = inject(PLATFORM_ID);
 

@@ -4,6 +4,10 @@ import { HomeComponent } from './routes/home/home.component';
 import { SimuladorPageComponent } from './routes/simulador-page/simulador-page.component';
 import { PasswordComponent } from './routes/password/password.component';
 import { authGuard } from './auth/auth.guard';
+import { ResultadosComponent } from './routes/resultados/resultados.component';
+import { HistoricoComponent } from './routes/historico/historico.component';
+import { ConfiguracoesComponent } from './routes/configuracoes/configuracoes.component';
+import { SimulacaorecorrenteComponent } from './routes/simulacaorecorrente/simulacaorecorrente.component';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent },
@@ -15,4 +19,9 @@ export const routes: Routes = [
             import('./routes/simulador-page/simulador-page.component').then(m => m.SimuladorPageComponent),
     },
     { path: 'account/password', component: PasswordComponent },
+    { path: 'simulador_de_gastos/resultados', component: ResultadosComponent },
+    { path: 'simulador_de_gastos/historicos', component: HistoricoComponent },
+    { path: 'simulador_de_gastos/configuracoes', component: ConfiguracoesComponent },
+    { path: 'simulador_de_gastos/simulacao_recorrente', component: SimulacaorecorrenteComponent },
+    { path: 'simulador_de_gastos/simulacao_medio', component: ConfiguracoesComponent }
 ];

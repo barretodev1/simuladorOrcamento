@@ -30,21 +30,26 @@
 
       <!-- menu -->
       <div class="mt-4 flex flex-col flex-1 min-h-0 overflow-hidden w-full">
-        <app-menu-options imagePath="/inicio.svg" title="Menu Principal"></app-menu-options>
-        <app-menu-options imagePath="/wallet.svg" title="Simular"></app-menu-options>
-        <app-menu-options imagePath="/badge-dollar-sign.svg" title="Resultados"></app-menu-options>
-        <app-menu-options imagePath="/history.svg" title="Históricos"></app-menu-options>
-        <app-menu-options imagePath="/settings.svg" title="Configurações"></app-menu-options>
+        <app-menu-options imagePath="/inicio.svg" title="Menu Principal"
+          route="/simulador_de_gastos"></app-menu-options>
+
+        <app-menu-options imagePath="/badge-dollar-sign.svg" title="Resultados"
+          route="/simulador_de_gastos/resultados"></app-menu-options>
+
+        <app-menu-options imagePath="/history.svg" title="Históricos"
+          route="/simulador_de_gastos/historicos"></app-menu-options>
+
+        <app-menu-options imagePath="/settings.svg" title="Configurações"
+          route="/simulador_de_gastos/configuracoes"></app-menu-options>
       </div>
 
-      <!-- perfil -->
       <div class="mt-auto w-full p-3 bg-white">
-        <app-menu-options imagePath="/user.svg" [title]="user.name"></app-menu-options>
+        <app-menu-options imagePath="/user.svg" [title]="user.name"
+          route="/simulador_de_gastos/conta"></app-menu-options>
       </div>
-
     </div>
 
-    <!-- ÁREA DE CONTEÚDO (lado direito) -->
+
     <!-- ÁREA DE CONTEÚDO (lado direito) -->
     <div class="flex-1 bg-white rounded-t-3xl overflow-hidden min-h-0">
       <div class="h-full min-h-0 flex flex-col gap-4 p-4">
