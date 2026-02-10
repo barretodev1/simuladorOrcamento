@@ -1,10 +1,11 @@
+import { KpiCardComponent } from '@/components/kpi-card/kpi-card.component';
 import { MenuOptionsComponent } from '@/components/menu-options/menu-options.component';
 import { isPlatformBrowser } from '@angular/common';
 import { Component, inject, PLATFORM_ID } from '@angular/core';
 
 @Component({
   selector: 'app-configuracoes',
-  imports: [MenuOptionsComponent],
+  imports: [MenuOptionsComponent, KpiCardComponent],
   templateUrl: './configuracoes.component.html'
 })
 
