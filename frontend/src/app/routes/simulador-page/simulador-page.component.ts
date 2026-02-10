@@ -3,6 +3,7 @@ import { Component, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { KpiCardComponent } from '@/components/kpi-card/kpi-card.component';
 import { CardSimulatorComponent } from '@/components/card-simulator/card-simulator.component';
+import { AuthService } from '@/auth/auth.service';
 
 @Component({
   standalone: true,
@@ -13,12 +14,13 @@ import { CardSimulatorComponent } from '@/components/card-simulator/card-simulat
 
 export class SimuladorPageComponent {
   private platformId = inject(PLATFORM_ID);
+  private auth = inject(AuthService);
 
   user = { name: 'Usuário' };
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      this.user.name = localStorage.getItem('user_name') || 'Usuário';
+      this.user.name = this.auth.getUserName() || 'Usuário';
     }
   }
 }

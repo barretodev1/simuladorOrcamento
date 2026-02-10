@@ -12,6 +12,11 @@ type LoginResponse = {
   token?: string;
   accessToken?: string;
   access_token?: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
 };
 
 @Component({
@@ -68,8 +73,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
         next: (res: LoginResponse) => {
           const token = res?.token ?? res?.accessToken ?? res?.access_token;
 
-          // ✅ salva token pra manter logado
           if (token) this.auth.setToken(token);
+
+          // ✅ seu backend retorna res.user.name
+          const userName = res?.user?.name;
+          if (userName) this.auth.setUserName(userName);
 
           const returnUrl =
             this.route.snapshot.queryParamMap.get('returnUrl') || '/simulador_de_gastos';
