@@ -10,8 +10,6 @@ import { CommonModule } from '@angular/common';
 export class KpiCardComponent {
   @Input() title = 'KPI';
   @Input() value = '0';
-  @Input() badge = '+0%';
   @Input() badgeUp = true;
-  @Input() strongLine = 'Em alta este mês';
   @Input() subLine = '';
 }

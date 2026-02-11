@@ -1,9 +1,8 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
-
 import { routes } from './app.routes';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';import { provideZard } from '@/shared/core/provider/providezard';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 
 
 export const appConfig: ApplicationConfig = {
@@ -12,5 +11,5 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
     provideHttpClient(withFetch()),
-    provideZard(),]
+    ]
 };
