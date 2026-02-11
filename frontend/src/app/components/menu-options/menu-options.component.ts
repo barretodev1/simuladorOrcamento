@@ -11,7 +11,7 @@ import { NgIf } from '@angular/common'; // 👈 IMPORTAR
 export class MenuOptionsComponent {
   @Input() imagePath!: string;
   @Input() title!: string;
-  @Input() route!: string;
+  @Input() route?: string;
   @Input() isUser = false;
 
   showDropdown = false;
