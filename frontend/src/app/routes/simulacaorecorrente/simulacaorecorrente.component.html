@@ -28,7 +28,7 @@
         </button>
       </div>
 
-      <!-- ✅ menu principal (vira scroll e empurra o user pro rodapé) -->
+      <!-- ✅ menu principal -->
       <div class="mt-4 flex-1 min-h-0 overflow-auto w-full">
         <app-menu-options *ngFor="let item of orderedMenu; trackBy: trackByKey" [imagePath]="item.imagePath"
           [title]="item.title" [route]="item.route"></app-menu-options>
@@ -90,7 +90,7 @@
         </div>
       </div>
 
-      <!-- ✅ user (sempre no rodapé) -->
+      <!-- ✅ user -->
       <div class="shrink-0 w-full pt-3 bg-white">
         <app-menu-options imagePath="/user.svg" [title]="user.name" route="/simulador_de_gastos/conta"
           [isUser]="true"></app-menu-options>
@@ -222,9 +222,6 @@
                   </button>
                 </div>
 
-                <!-- configs após csv -->
-
-
                 <!-- ✅ BUSCA POR PESSOA (ID ou NOME) -->
                 <div *ngIf="csvLoaded" class="justify-center mb-3 rounded-2xl bg-white">
                   <div class="flex flex-wrap items-end gap-3">
@@ -293,8 +290,12 @@
                 <div *ngIf="csvLoaded" class="border border-gray-200 rounded-2xl bg-white overflow-hidden">
                   <div class="flex flex-col">
 
-                    <!-- ÚNICO scroll horizontal -->
-                    <div #tableWrap class="w-full">
+                    <!-- ✅ ÚNICO scroll horizontal (AGORA COM overflow-x-auto e evento de scroll) -->
+                    <div
+                      #tableWrap
+                      class="w-full overflow-x-auto overflow-y-hidden"
+                      (scroll)="onTableScroll()"
+                    >
                       <table class="w-max text-sm" [style.minWidth.px]="tableMinWidth">
                         <thead class="sticky top-0 z-10">
                           <tr class="border-b border-gray-200">
@@ -315,20 +316,14 @@
                                 draggable="false" title="Arraste para redimensionar"></div>
                             </th>
 
-                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Simulação
-                            </th>
-                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Percentual
-                              (%)</th>
-                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Custo
-                              mensal</th>
-                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Custo anual
-                            </th>
-
+                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Simulação</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Percentual (%)</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Custo mensal</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Custo anual</th>
                           </tr>
                         </thead>
 
                         <tbody>
-                          <!-- ✅ AQUI: agora usa filteredRows -->
                           <ng-container *ngFor="let row of filteredRows; trackBy: trackByRowIndex">
                             <tr *ngIf="row" class="border-b border-gray-100 hover:bg-gray-50">
                               <td *ngFor="let col of dataColumns; trackBy: trackByColKey"
@@ -376,7 +371,7 @@
                       </table>
                     </div>
 
-                    <!-- botões sticky (no lugar do scroll) -->
+                    <!-- botões sticky -->
                     <div class="sticky bottom-0 bg-white border-t border-gray-200">
                       <div class="flex items-center justify-between gap-2 p-2">
                         <button type="button" (click)="scrollTableTo('start')" [disabled]="!canScrollLeft"

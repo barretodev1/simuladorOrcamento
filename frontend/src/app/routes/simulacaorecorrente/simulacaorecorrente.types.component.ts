@@ -1,0 +1,43 @@
+export type MenuItem = {
+  key: string;
+  title: string;
+  route?: string;
+  imagePath: string;
+};
+
+export type ActiveView = 'area' | 'empresa';
+export type SimType = '' | 'MERITO' | 'PROMOCAO';
+
+export type CsvRow = {
+  [key: string]: string | number | null;
+
+  __simType: SimType;
+  __percent: number | null;
+
+  __incMonthly: number | null;
+  __incMonthlyFormatted: string;
+
+  __incAnnual: number | null;
+  __incAnnualFormatted: string;
+
+  __error: string;
+};
+
+export type ColumnDef = {
+  key: string;
+  label: string;
+  width: number;
+};
+
+export type SavedScenario = {
+  id: string;
+  name: string;
+  createdAt: number;
+
+  fileName: string;
+  activeView: ActiveView;
+  salaryColumnKey: string;
+
+  dataColumns: ColumnDef[];
+  rows: CsvRow[];
+};
