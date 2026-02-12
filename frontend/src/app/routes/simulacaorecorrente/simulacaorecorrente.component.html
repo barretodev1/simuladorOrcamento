@@ -190,7 +190,7 @@
                   <div class="flex flex-wrap items-center gap-3">
                     <div class="text-sm font-medium text-emerald-900">Nome da simulação:</div>
 
-                    <input type="text" [(ngModel)]="saveName" [ngModelOptions]="{standalone:true}"
+                    <input type="text"
                       class="h-9 w-80 max-w-full rounded-xl border border-emerald-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-100"
                       placeholder="Ex: Mérito Financeiro Q1" />
 
@@ -370,22 +370,6 @@
                         </tbody>
                       </table>
                     </div>
-
-                    <!-- botões sticky -->
-                    <div class="sticky bottom-0 bg-white border-t border-gray-200">
-                      <div class="flex items-center justify-between gap-2 p-2">
-                        <button type="button" (click)="scrollTableTo('start')" [disabled]="!canScrollLeft"
-                          class="h-9 px-3 rounded-xl border border-gray-200 bg-white text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                          Início
-                        </button>
-
-                        <button type="button" (click)="scrollTableTo('end')" [disabled]="!canScrollRight"
-                          class="h-9 px-3 rounded-xl border border-gray-200 bg-white text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                          Fim
-                        </button>
-                      </div>
-                    </div>
-
                   </div>
                 </div>
 

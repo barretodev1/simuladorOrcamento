@@ -15,7 +15,18 @@ import { KpiCardComponent } from '@/components/kpi-card/kpi-card.component';
 import { AuthService } from '@/auth/auth.service';
 
 import { ScenarioStoreService } from './scenario-store.service.component';
-import { ActiveView, ColumnDef, CsvRow, MenuItem, SavedScenario, SimType } from './simulacaorecorrente.types.component';
+import { ScenarioApiService } from './scenario-api.service.component';
+
+import {
+  ActiveView,
+  ColumnDef,
+  CsvRow,
+  MenuItem,
+  SavedScenario,
+  SavedScenarioSummary,
+  SimType
+} from './simulacaorecorrente.types.component';
+
 import {
   guessIdColumn,
   guessNameColumn,
@@ -38,6 +49,7 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private auth = inject(AuthService);
   private store = inject(ScenarioStoreService);
+  private api = inject(ScenarioApiService);
 
   @ViewChild('csvInput') csvInput?: ElementRef<HTMLInputElement>;
   @ViewChild('tableWrap') tableWrap?: ElementRef<HTMLDivElement>;
@@ -96,14 +108,27 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   // salvar cenários
   saveName = '';
   showSaveInput = false;
-  savedScenarios: SavedScenario[] = [];
 
-  ngOnInit() {
+  // lista (sidebar) vem do backend (summary)
+  savedScenarios: SavedScenarioSummary[] = [];
+
+  // cache em memória do cenário completo quando abrir
+  private scenarioFullCache = new Map<string, SavedScenario>();
+
+  async ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       this.user.name = this.auth.getUserName() || 'Usuário';
-      this.savedScenarios = this.store.load();
-      this.applyScenarioFromUrlIfAny();
+
+      // carrega cache rápido (UX)
+      this.savedScenarios = this.store.loadSummaries() || [];
+
+      // tenta sincronizar do DB (source of truth)
+      if (this.auth.isLoggedIn()) {
+        await this.refreshFromApi();
+        await this.loadScenarioFromUrlIfAny(); // se tiver ?saved=...
+      }
     }
+
     this.onSearch();
     this.monthsRemaining = this.getMonthsRemainingInYear(new Date());
     this.computeKpis();
@@ -120,7 +145,25 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     if (this.boundUp) window.removeEventListener('pointerup', this.boundUp);
   }
 
-  // ========== UI sync do wrap (corrige botões que “só funcionam depois do wheel”) ==========
+  private async refreshFromApi() {
+    try {
+      const list = await this.api.list();
+      this.savedScenarios = list;
+      this.store.saveSummaries(list);
+    } catch {
+      // se falhar, fica com o cache local
+    }
+  }
+
+  private async loadScenarioFromUrlIfAny() {
+    const id = this.store.getScenarioParamFromUrl();
+    if (!id) return;
+
+    // tenta abrir direto (vai buscar no backend se precisar)
+    await this.loadScenario(id);
+  }
+
+  // ========== UI sync do wrap ==========
   private syncTableUiAfterRender(tryCount: number = 0) {
     if (!isPlatformBrowser(this.platformId)) return;
     requestAnimationFrame(() => {
@@ -257,14 +300,11 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     this.computeKpis();
   }
 
+  onPeopleSearchConfigChange() { this.applyPeopleSearch(); }
+
   // ========== Simulação ==========
   onRowSimChange(row: CsvRow) {
     this.applySimulationToRow(row, { requireComplete: false });
-    this.computeKpis();
-  }
-
-  simulateRow(row: CsvRow) {
-    this.applySimulationToRow(row, { requireComplete: true });
     this.computeKpis();
   }
 
@@ -354,8 +394,6 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   }
 
   // ========== Busca pessoa ==========
-  onPeopleSearchConfigChange() { this.applyPeopleSearch(); }
-
   applyPeopleSearch() {
     this.peopleSearchError = '';
     if (!this.csvLoaded || !this.rows.length) { this.filteredRows = []; return; }
@@ -564,40 +602,94 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     if (this.showSaveInput && !this.saveName) this.saveName = `Simulação ${new Date().toLocaleDateString('pt-BR')}`;
   }
 
-  saveScenario() {
+  async saveScenario() {
     if (!this.csvLoaded) return;
 
     const name = (this.saveName || '').trim();
     if (!name) { this.csvError = 'Dê um nome para salvar a simulação.'; return; }
 
-    const scenario: SavedScenario = {
+    const scenarioFull: SavedScenario = {
       id: this.store.makeId(),
       name,
       createdAt: Date.now(),
       fileName: this.csvFileName || 'base.csv',
       activeView: this.activeView,
       salaryColumnKey: this.salaryColumnKey,
+      idColumnKey: this.idColumnKey || '',
+      nameColumnKey: this.nameColumnKey || '',
       dataColumns: this.dataColumns.map(c => ({ ...c })),
       rows: this.rows.map(r => ({ ...r })),
     };
 
-    this.savedScenarios = [scenario, ...this.savedScenarios].slice(0, 50);
-    this.store.save(this.savedScenarios);
-    this.store.setScenarioParamOnUrl(scenario.id);
+    // cache em memória + local
+    this.scenarioFullCache.set(scenarioFull.id, scenarioFull);
+    this.store.cacheFullScenario(scenarioFull);
 
-    this.showSaveInput = false;
+    try {
+      // salva no DB
+      const summary = await this.api.upsert(scenarioFull);
+
+      // atualiza sidebar (summary)
+      this.savedScenarios = [summary, ...this.savedScenarios].filter((x, i, arr) => arr.findIndex(y => y.id === x.id) === i).slice(0, 50);
+      this.store.saveSummaries(this.savedScenarios);
+
+      this.store.setScenarioParamOnUrl(summary.id);
+      this.showSaveInput = false;
+    } catch {
+      // fallback: mantém pelo menos no cache local, mas o objetivo é salvar no DB
+      this.savedScenarios = [{
+        id: scenarioFull.id,
+        name: scenarioFull.name,
+        createdAt: scenarioFull.createdAt,
+        fileName: scenarioFull.fileName,
+        activeView: scenarioFull.activeView,
+        salaryColumnKey: scenarioFull.salaryColumnKey,
+        idColumnKey: scenarioFull.idColumnKey,
+        nameColumnKey: scenarioFull.nameColumnKey,
+      }, ...this.savedScenarios].slice(0, 50);
+
+      this.store.saveSummaries(this.savedScenarios);
+      this.store.setScenarioParamOnUrl(scenarioFull.id);
+      this.showSaveInput = false;
+    }
   }
 
-  loadScenario(id: string) {
-    const found = this.savedScenarios.find(s => s.id === id);
-    if (!found) return;
+  async loadScenario(id: string) {
+    // 1) tenta cache em memória
+    const mem = this.scenarioFullCache.get(id);
+    if (mem) { this.applyScenario(mem); return; }
 
+    // 2) tenta cache local (recentFull)
+    const local = this.store.loadFullScenario(id);
+    if (local) {
+      this.scenarioFullCache.set(id, local);
+      this.applyScenario(local);
+      return;
+    }
+
+    // 3) busca do DB
+    try {
+      const scenario = await this.api.get(id);
+      this.scenarioFullCache.set(id, scenario);
+      this.store.cacheFullScenario(scenario);
+      this.applyScenario(scenario);
+    } catch {
+      // se não achou, limpa param
+      const current = this.store.getScenarioParamFromUrl();
+      if (current === id) this.store.clearScenarioParamFromUrl();
+    }
+  }
+
+  private applyScenario(found: SavedScenario) {
     this.csvLoaded = true;
     this.csvError = '';
 
     this.csvFileName = found.fileName;
     this.activeView = found.activeView;
     this.salaryColumnKey = found.salaryColumnKey;
+
+    this.idColumnKey = found.idColumnKey || '';
+    this.nameColumnKey = found.nameColumnKey || '';
 
     this.dataColumns = sanitizeColumnsArray(found.dataColumns);
     this.rows = sanitizeRowsArray(found.rows);
@@ -619,9 +711,18 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     this.syncTableUiAfterRender();
   }
 
-  deleteScenario(id: string) {
+  async deleteScenario(id: string) {
+    // remove local UI primeiro (snappy)
     this.savedScenarios = this.savedScenarios.filter(s => s.id !== id);
-    this.store.save(this.savedScenarios);
+    this.store.saveSummaries(this.savedScenarios);
+    this.store.removeFromCache(id);
+    this.scenarioFullCache.delete(id);
+
+    try {
+      await this.api.remove(id);
+    } catch {
+      // se falhar, a próxima sincronização vai corrigir
+    }
 
     const current = this.store.getScenarioParamFromUrl();
     if (current === id) this.store.clearScenarioParamFromUrl();
@@ -644,12 +745,5 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       document.execCommand('copy');
       document.body.removeChild(el);
     }
-  }
-
-  private applyScenarioFromUrlIfAny() {
-    const id = this.store.getScenarioParamFromUrl();
-    if (!id) return;
-    const found = this.savedScenarios.find(s => s.id === id);
-    if (found) this.loadScenario(id);
   }
 }

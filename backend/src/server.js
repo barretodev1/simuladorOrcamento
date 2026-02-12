@@ -6,15 +6,19 @@ const jwt = require("jsonwebtoken");
 const { Resend } = require("resend");
 const pool = require("./db");
 const { sendEmail } = require("./mailer");
-
+const scenariosRouter = require("./routes/scenarios");
 
 const app = express();
 
 const FRONTEND_ORIGIN =
   process.env.FRONTEND_ORIGIN || process.env.APP_URL || "http://localhost:4200";
 
-app.use(cors({ origin: FRONTEND_ORIGIN }));
-app.use(express.json());
+app.use(cors({
+  origin: FRONTEND_ORIGIN,
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+app.use(express.json({ limit: "25mb" }));
+app.use("/scenarios", scenariosRouter);
 
 // Resend (se não tiver key, funciona em modo dev logando o código)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;

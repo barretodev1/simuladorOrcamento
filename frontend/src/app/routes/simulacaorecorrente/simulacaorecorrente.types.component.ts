@@ -29,7 +29,8 @@ export type ColumnDef = {
   width: number;
 };
 
-export type SavedScenario = {
+// Resumo p/ sidebar
+export type SavedScenarioSummary = {
   id: string;
   name: string;
   createdAt: number;
@@ -38,6 +39,12 @@ export type SavedScenario = {
   activeView: ActiveView;
   salaryColumnKey: string;
 
+  idColumnKey: string;
+  nameColumnKey: string;
+};
+
+// Completo (quando abre)
+export type SavedScenario = SavedScenarioSummary & {
   dataColumns: ColumnDef[];
   rows: CsvRow[];
 };
