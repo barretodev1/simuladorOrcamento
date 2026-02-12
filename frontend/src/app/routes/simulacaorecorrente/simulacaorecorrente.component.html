@@ -34,7 +34,7 @@
           [title]="item.title" [route]="item.route"></app-menu-options>
 
         <!-- ✅ SIMULAÇÕES SALVAS -->
-        <div *ngIf="savedScenarios.length > 0" class="w-full mt-4 pt-4 border-t border-gray-100">
+        <div *ngIf="savedScenarios.length > 0" class="w-full mt-1 pt-4 border-t border-gray-100">
           <div class="flex items-center justify-between px-1">
             <div class="text-xs font-semibold text-gray-500 tracking-wide uppercase">
               Simulações salvas
@@ -44,7 +44,7 @@
             </div>
           </div>
 
-          <div class="flex flex-col gap-2 max-h-52 overflow-auto pr-1">
+          <div class="flex flex-col gap-2 max-h-42 overflow-auto pr-1">
             <div *ngFor="let s of savedScenarios"
               class="group w-full rounded-xl border border-gray-100 bg-white hover:bg-gray-50 transition-colors">
               <div class="flex items-center justify-between gap-2 px-3 py-2">
@@ -92,7 +92,7 @@
 
       <!-- ✅ user -->
       <div class="shrink-0 w-full pt-3 bg-white">
-        <app-menu-options imagePath="/user.svg" [title]="user.name" route="/simulador_de_gastos/conta"
+        <app-menu-options imagePath="/user.svg" [title]="user.name || 'Conta'" route="/simulador_de_gastos/conta"
           [isUser]="true"></app-menu-options>
       </div>
     </div>
@@ -106,11 +106,13 @@
           <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <app-kpi-card title="HC Atual" [value]="kpiHcValue" subLine="HC da última base atualizada"></app-kpi-card>
 
+            <!-- ✅ AGORA BASE + SIM (incremento mensal) -->
             <app-kpi-card title="Total Mensal" [value]="kpiTotalMonthlyValue"
-              subLine="Custo Folha - Mensal"></app-kpi-card>
+              subLine="Custo Folha (Base + Simulações)"></app-kpi-card>
 
+            <!-- ✅ AGORA MÉDIA DO TOTAL MENSAL (já com simulações) -->
             <app-kpi-card title="Custo Médio | HC" [value]="kpiAvgSalaryValue"
-              subLine="Ticket Médio por Headcount"></app-kpi-card>
+              subLine="Ticket Médio (Total Mensal / HC)"></app-kpi-card>
 
             <app-kpi-card title="Projeção Anual" [value]="kpiAnnualForecastValue"
               subLine="Base + Simulações"></app-kpi-card>
@@ -126,53 +128,68 @@
             class="h-full min-h-0 border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col">
 
             <!-- header da área -->
-            <div class="shrink-0 p-4 border-b border-gray-200 flex items-center justify-between gap-4">
+            <div class="shrink-0 p-4 border-b border-gray-200 flex flex-col gap-3">
 
-              <div class="flex items-center gap-2 shrink-0" *ngIf="activeView === 'area'">
-                <button type="button" (click)="toggleSaveInput()" [disabled]="!csvLoaded"
-                  class="h-9 px-3 rounded-xl text-sm transition-colors"
-                  [ngClass]="csvLoaded ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-gray-200 text-gray-500 cursor-not-allowed'"
-                  title="Salvar esta simulação">
-                  Salvar
-                </button>
+              <!-- ===== BLOCO SUPERIOR (some no Modo foco) ===== -->
+              <div class="overflow-hidden transition-all duration-300 ease-in-out"
+                [ngClass]="focusListMode ? 'max-h-0 opacity-0 -mt-2 pointer-events-none' : 'max-h-[260px] opacity-100 mt-0'">
+                <!-- ROW: esquerda (botões) / direita (coluna salário) -->
+                <div class="flex items-start justify-between gap-4">
+                  <!-- ESQUERDA: div1 -->
+                  <div class="flex items-center gap-2 shrink-0" *ngIf="activeView === 'area'">
+                    <button type="button" (click)="toggleSaveInput()" [disabled]="!csvLoaded"
+                      class="h-9 px-3 rounded-xl text-sm transition-colors"
+                      [ngClass]="csvLoaded ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-gray-200 text-gray-500 cursor-not-allowed'"
+                      title="Salvar esta simulação">
+                      Salvar
+                    </button>
 
-                <input #csvInput type="file" accept=".csv,text/csv" class="hidden" (change)="onCsvSelected($event)" />
+                    <input #csvInput type="file" accept=".csv,text/csv" class="hidden"
+                      (change)="onCsvSelected($event)" />
 
-                <button type="button" (click)="openCsvPicker()"
-                  class="h-9 px-3 rounded-xl bg-gray-900 text-white text-sm hover:bg-gray-700 transition-colors">
-                  Importar CSV
-                </button>
+                    <button type="button" (click)="openCsvPicker()"
+                      class="h-9 px-3 rounded-xl bg-gray-900 text-white text-sm hover:bg-gray-700 transition-colors">
+                      Importar CSV
+                    </button>
 
-                <button *ngIf="csvLoaded" type="button" (click)="clearCsv()"
-                  class="h-9 px-3 rounded-xl bg-gray-100 text-gray-800 text-sm hover:bg-gray-200 transition-colors">
-                  Limpar
-                </button>
+                    <button *ngIf="csvLoaded" type="button" (click)="clearCsv()"
+                      class="h-9 px-3 rounded-xl bg-gray-100 text-gray-800 text-sm hover:bg-gray-200 transition-colors">
+                      Limpar
+                    </button>
+                  </div>
+
+                  <!-- DIREITA: div2 -->
+                  <div *ngIf="csvLoaded" class="flex flex-col justify-center items-end gap-2">
+                    <div class="flex items-center gap-3">
+                      <div class="text-xs text-gray-500 whitespace-nowrap">Coluna de salário:</div>
+
+                      <select [(ngModel)]="salaryColumnKey" (change)="onSalaryColumnChange()"
+                        [ngModelOptions]="{standalone:true}"
+                        class="h-9 rounded-xl border border-gray-200 bg-white px-3 items-center justify-center text-sm outline-none focus:ring-2 focus:ring-gray-200">
+                        <option class="items-center justify-center flex" value="">Selecione...</option>
+                        <option class="items-center justify-center flex" *ngFor="let col of dataColumns; trackBy: trackByColKey" [value]="col.key">
+                          {{ col.label }}
+                        </option>
+                      </select>
+                    </div>
+
+                    
+                    <div class="text-xs text-gray-500 flex items-center gap-1 justify-center" *ngIf="salaryColumnKey">
+                      Salário selecionado: <span class="text-gray-900">{{ salaryColumnKey }}</span>
+                    </div>
+
+                    <div class="text-xs text-gray-500">
+                      Meses restantes no ano: <span class="text-gray-900 font-medium">{{ monthsRemaining }}</span>
+                    </div>
+
+                    <div class="text-xs text-red-600" *ngIf="csvError">
+                      {{ csvError }}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div *ngIf="csvLoaded" class="mb-4 flex justify-center flex-wrap items-center gap-3">
-                <div class="text-xs text-gray-500">Coluna de salário:</div>
-
-                <select [(ngModel)]="salaryColumnKey" (change)="onSalaryColumnChange()"
-                  [ngModelOptions]="{standalone:true}"
-                  class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-gray-200">
-                  <option value="">Selecione...</option>
-                  <option *ngFor="let col of dataColumns; trackBy: trackByColKey" [value]="col.key">
-                    {{ col.label }}
-                  </option>
-                </select>
-
-                <div class="text-xs text-gray-500" *ngIf="salaryColumnKey">
-                  Salário selecionado: <span class="text-gray-900">{{ salaryColumnKey }}</span>
-                </div>
-
-                <div class="text-xs text-gray-500">
-                  Meses restantes no ano: <span class="text-gray-900 font-medium">{{ monthsRemaining }}</span>
-                </div>
-
-                <div class="text-xs text-red-600" *ngIf="csvError">
-                  {{ csvError }}
-                </div>
-              </div>
+              <!-- ===== /BLOCO SUPERIOR ===== -->
 
             </div>
 
@@ -185,30 +202,34 @@
 
               <div *ngIf="activeView === 'area'">
 
-                <!-- input salvar -->
-                <div *ngIf="showSaveInput" class="p-4 bg-emerald-50 rounded-2xl">
-                  <div class="flex flex-wrap items-center gap-3">
-                    <div class="text-sm font-medium text-emerald-900">Nome da simulação:</div>
+                <!-- ===== INPUT SALVAR (some no Modo foco, com smooth) ===== -->
+                <div class="overflow-hidden transition-all duration-300 ease-in-out"
+                  [ngClass]="(!focusListMode && showSaveInput) ? 'max-h-[260px] opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0 pointer-events-none'">
+                  <div class="p-4 bg-emerald-50 rounded-2xl">
+                    <div class="flex flex-wrap items-center gap-3">
+                      <div class="text-sm font-medium text-emerald-900">Nome da simulação:</div>
 
-                    <input type="text"
-                      class="h-9 w-80 max-w-full rounded-xl border border-emerald-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-100"
-                      placeholder="Ex: Mérito Financeiro Q1" />
+                      <input type="text" [(ngModel)]="saveName" [ngModelOptions]="{standalone:true}"
+                        class="h-9 w-80 max-w-full rounded-xl border border-emerald-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-100"
+                        placeholder="Ex: Mérito Financeiro Q1" />
 
-                    <button type="button" (click)="saveScenario()"
-                      class="h-9 px-3 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500 transition-colors">
-                      Confirmar salvar
-                    </button>
+                      <button type="button" (click)="saveScenario()"
+                        class="h-9 px-3 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500 transition-colors">
+                        Confirmar salvar
+                      </button>
 
-                    <button type="button" (click)="toggleSaveInput()"
-                      class="h-9 px-3 rounded-xl bg-white text-emerald-800 text-sm border border-emerald-200 hover:bg-emerald-100 transition-colors">
-                      Cancelar
-                    </button>
-                  </div>
+                      <button type="button" (click)="toggleSaveInput()"
+                        class="h-9 px-3 rounded-xl bg-white text-emerald-800 text-sm border border-emerald-200 hover:bg-emerald-100 transition-colors">
+                        Cancelar
+                      </button>
+                    </div>
 
-                  <div class="mt-2 text-xs text-emerald-800">
-                    Ao salvar, ela aparece na sidebar (abaixo de Configurações).
+                    <div class="mt-2 text-xs text-emerald-800">
+                      Ao salvar, ela aparece na sidebar (abaixo de Configurações).
+                    </div>
                   </div>
                 </div>
+                <!-- ===== /INPUT SALVAR ===== -->
 
                 <!-- call-to-action -->
                 <div *ngIf="!csvLoaded" class="py-10 flex flex-col items-center justify-center gap-3 text-center">
@@ -222,9 +243,22 @@
                   </button>
                 </div>
 
+                <!-- ✅ HEADER LISTA + BOTÃO MODO FOCO -->
+                <div *ngIf="csvLoaded" class="flex items-center justify-between mb-2">
+                  <div class="text-xs font-semibold text-gray-500 tracking-wide uppercase">
+                    Lista de funcionários
+                  </div>
+
+                  <button type="button" (click)="toggleFocusListMode()"
+                    class="h-9 px-3 rounded-xl border border-gray-200 bg-white text-sm hover:bg-gray-200 cursor-pointer transition-all duration-300 ease-in-out">
+                    {{ focusListMode ? 'Voltar (modo normal)' : 'Modo foco' }}
+                  </button>
+                </div>
+
                 <!-- ✅ BUSCA POR PESSOA (ID ou NOME) -->
                 <div *ngIf="csvLoaded" class="justify-center mb-3 rounded-2xl bg-white">
                   <div class="flex flex-wrap items-end gap-3">
+
                     <div class="flex flex-col gap-1">
                       <label class="text-xs text-gray-500">Coluna de ID (opcional)</label>
                       <select [(ngModel)]="idColumnKey" (change)="onPeopleSearchConfigChange()"
@@ -283,6 +317,7 @@
                         </svg>
                       </button>
                     </div>
+
                   </div>
                 </div>
 
@@ -290,12 +325,8 @@
                 <div *ngIf="csvLoaded" class="border border-gray-200 rounded-2xl bg-white overflow-hidden">
                   <div class="flex flex-col">
 
-                    <!-- ✅ ÚNICO scroll horizontal (AGORA COM overflow-x-auto e evento de scroll) -->
-                    <div
-                      #tableWrap
-                      class="w-full overflow-x-auto overflow-y-hidden"
-                      (scroll)="onTableScroll()"
-                    >
+                    <!-- ✅ ÚNICO scroll horizontal -->
+                    <div #tableWrap class="w-full overflow-x-auto overflow-y-hidden" (scroll)="onTableScroll()">
                       <table class="w-max text-sm" [style.minWidth.px]="tableMinWidth">
                         <thead class="sticky top-0 z-10">
                           <tr class="border-b border-gray-200">
@@ -316,10 +347,14 @@
                                 draggable="false" title="Arraste para redimensionar"></div>
                             </th>
 
-                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Simulação</th>
-                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Percentual (%)</th>
-                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Custo mensal</th>
-                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Custo anual</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Simulação
+                            </th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Percentual
+                              (%)</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Custo
+                              mensal</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap w-50">Custo anual
+                            </th>
                           </tr>
                         </thead>
 

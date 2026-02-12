@@ -95,6 +95,9 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   kpiAvgSalaryValue = this.brl.format(0);
   kpiAnnualForecastValue = this.brl.format(0);
 
+  // ✅ MODO FOCO (pedido)
+  focusListMode = false;
+
   // resize
   private resizingKey: string | null = null;
   private resizeStartX = 0;
@@ -197,6 +200,22 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   }
   trackByKey(_i: number, item: MenuItem) { return item.key; }
 
+  // ========== ✅ MODO FOCO ==========
+  toggleFocusListMode() {
+    this.focusListMode = !this.focusListMode;
+
+    // quando entra no modo foco, fecha o salvar (pra não poluir)
+    if (this.focusListMode) this.showSaveInput = false;
+
+    // "subir pro topo" com smooth: traz a tabela pra cima (melhora a UX quando o resto some)
+    if (this.focusListMode && isPlatformBrowser(this.platformId)) {
+      requestAnimationFrame(() => {
+        const wrap = this.tableWrap?.nativeElement;
+        if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }
+
   // ========== CSV ==========
   openCsvPicker() { this.csvInput?.nativeElement.click(); }
 
@@ -209,6 +228,9 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     this.salaryColumnKey = '';
     this.showSaveInput = false;
     this.saveName = '';
+
+    // ✅ reset modo foco
+    this.focusListMode = false;
 
     const input = this.csvInput?.nativeElement;
     if (input) input.value = '';
@@ -277,6 +299,9 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       this.csvLoaded = true;
       this.showSaveInput = false;
       this.saveName = '';
+
+      // ✅ reset modo foco ao carregar csv
+      this.focusListMode = false;
 
       this.idColumnKey = guessIdColumn(parsed.headers) || '';
       this.nameColumnKey = guessNameColumn(parsed.headers) || '';
@@ -358,38 +383,46 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     return 12 - month + 1;
   }
 
-  // ========== KPIs ==========
+  // ========== ✅ KPIs (AJUSTADO) ==========
   private computeKpis() {
-    this.kpiHcValue = String(this.rows.length || 0);
+    const hc = this.rows.length || 0;
+    this.kpiHcValue = String(hc);
 
-    if (!this.csvLoaded || !this.salaryColumnKey || !this.rows.length) {
+    if (!this.csvLoaded || !this.salaryColumnKey || !hc) {
       this.kpiTotalMonthlyValue = this.brl.format(0);
       this.kpiAvgSalaryValue = this.brl.format(0);
       this.kpiAnnualForecastValue = this.brl.format(0);
       return;
     }
 
-    let totalMonthly = 0;
-    let validCount = 0;
+    let baseMonthlyTotal = 0;
     let incMonthlyTotal = 0;
 
     for (const row of this.rows) {
       const baseSalary = parseMoneyToNumber(row[this.salaryColumnKey]);
       if (isFinite(baseSalary) && baseSalary > 0) {
-        totalMonthly += baseSalary;
-        validCount++;
+        baseMonthlyTotal += baseSalary;
+      }
 
-        const pct = Number(row.__percent);
-        if (row.__simType && isFinite(pct) && pct >= 0) incMonthlyTotal += baseSalary * (pct / 100);
+      // soma incremento já calculado na linha (mais robusto)
+      const inc = (row.__incMonthly as any);
+      if (typeof inc === 'number' && isFinite(inc) && inc > 0) {
+        incMonthlyTotal += inc;
       }
     }
 
-    const avgSalary = validCount ? (totalMonthly / validCount) : 0;
-    this.monthsRemaining = this.getMonthsRemainingInYear(new Date());
-    const annualForecast = (totalMonthly + incMonthlyTotal) * this.monthsRemaining;
+    const monthlyWithSim = baseMonthlyTotal + incMonthlyTotal;
 
-    this.kpiTotalMonthlyValue = this.brl.format(totalMonthly);
-    this.kpiAvgSalaryValue = this.brl.format(avgSalary);
+    // ✅ Total Mensal agora é Base + Simulações
+    this.kpiTotalMonthlyValue = this.brl.format(monthlyWithSim);
+
+    // ✅ Ticket médio com base no Total Mensal (já com sim) / HC
+    const avg = hc ? (monthlyWithSim / hc) : 0;
+    this.kpiAvgSalaryValue = this.brl.format(avg);
+
+    // ✅ Projeção anual coerente com o total mensal já simulado
+    this.monthsRemaining = this.getMonthsRemainingInYear(new Date());
+    const annualForecast = monthlyWithSim * this.monthsRemaining;
     this.kpiAnnualForecastValue = this.brl.format(annualForecast);
   }
 
@@ -598,8 +631,12 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   // ========== Salvar / carregar cenários ==========
   toggleSaveInput() {
     if (!this.csvLoaded) return;
+
+    // se abrir o salvar, sai do modo foco pra não “sumir” o UI
+    if (!this.showSaveInput && this.focusListMode) this.focusListMode = false;
+
     this.showSaveInput = !this.showSaveInput;
-    if (this.showSaveInput && !this.saveName) this.saveName = `Simulação ${new Date().toLocaleDateString('pt-BR')}`;
+    if (this.showSaveInput && !this.saveName) this.saveName = `${this.csvFileName}`;
   }
 
   async saveScenario() {
@@ -630,13 +667,16 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       const summary = await this.api.upsert(scenarioFull);
 
       // atualiza sidebar (summary)
-      this.savedScenarios = [summary, ...this.savedScenarios].filter((x, i, arr) => arr.findIndex(y => y.id === x.id) === i).slice(0, 50);
+      this.savedScenarios = [summary, ...this.savedScenarios]
+        .filter((x, i, arr) => arr.findIndex(y => y.id === x.id) === i)
+        .slice(0, 50);
+
       this.store.saveSummaries(this.savedScenarios);
 
       this.store.setScenarioParamOnUrl(summary.id);
       this.showSaveInput = false;
     } catch {
-      // fallback: mantém pelo menos no cache local, mas o objetivo é salvar no DB
+      // fallback
       this.savedScenarios = [{
         id: scenarioFull.id,
         name: scenarioFull.name,
@@ -674,7 +714,6 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       this.store.cacheFullScenario(scenario);
       this.applyScenario(scenario);
     } catch {
-      // se não achou, limpa param
       const current = this.store.getScenarioParamFromUrl();
       if (current === id) this.store.clearScenarioParamFromUrl();
     }
@@ -696,6 +735,9 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
 
     this.monthsRemaining = this.getMonthsRemainingInYear(new Date());
 
+    // ✅ sai do foco ao abrir cenário (pra não esconder UI sem querer)
+    this.focusListMode = false;
+
     this.recalculateAllRowsSimulations();
     this.computeKpis();
 
@@ -712,7 +754,6 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   }
 
   async deleteScenario(id: string) {
-    // remove local UI primeiro (snappy)
     this.savedScenarios = this.savedScenarios.filter(s => s.id !== id);
     this.store.saveSummaries(this.savedScenarios);
     this.store.removeFromCache(id);
@@ -720,9 +761,7 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.remove(id);
-    } catch {
-      // se falhar, a próxima sincronização vai corrigir
-    }
+    } catch {}
 
     const current = this.store.getScenarioParamFromUrl();
     if (current === id) this.store.clearScenarioParamFromUrl();
