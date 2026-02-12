@@ -95,8 +95,11 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   kpiAvgSalaryValue = this.brl.format(0);
   kpiAnnualForecastValue = this.brl.format(0);
 
-  // ✅ MODO FOCO (pedido)
+  // ✅ MODO FOCO DA LISTA (some blocos de cima)
   focusListMode = false;
+
+  // ✅ MODO FOCO DA UI (some sidebar/menu)
+  focusUiMode = false;
 
   // resize
   private resizingKey: string | null = null;
@@ -112,23 +115,17 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   saveName = '';
   showSaveInput = false;
 
-  // lista (sidebar) vem do backend (summary)
   savedScenarios: SavedScenarioSummary[] = [];
-
-  // cache em memória do cenário completo quando abrir
   private scenarioFullCache = new Map<string, SavedScenario>();
 
   async ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       this.user.name = this.auth.getUserName() || 'Usuário';
-
-      // carrega cache rápido (UX)
       this.savedScenarios = this.store.loadSummaries() || [];
 
-      // tenta sincronizar do DB (source of truth)
       if (this.auth.isLoggedIn()) {
         await this.refreshFromApi();
-        await this.loadScenarioFromUrlIfAny(); // se tiver ?saved=...
+        await this.loadScenarioFromUrlIfAny();
       }
     }
 
@@ -154,15 +151,13 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       this.savedScenarios = list;
       this.store.saveSummaries(list);
     } catch {
-      // se falhar, fica com o cache local
+      // mantém cache local
     }
   }
 
   private async loadScenarioFromUrlIfAny() {
     const id = this.store.getScenarioParamFromUrl();
     if (!id) return;
-
-    // tenta abrir direto (vai buscar no backend se precisar)
     await this.loadScenario(id);
   }
 
@@ -200,14 +195,39 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   }
   trackByKey(_i: number, item: MenuItem) { return item.key; }
 
-  // ========== ✅ MODO FOCO ==========
+  // ========== ✅ MODO FOCO (UI + LISTA) ==========
+  toggleFocusUiMode() {
+    this.focusUiMode = !this.focusUiMode;
+
+    // quando entra no foco: some blocos superiores também (fica "full table")
+    if (this.focusUiMode) {
+      this.focusListMode = true;
+      this.showSaveInput = false;
+    } else {
+      // quando sai: volta pro layout normal (você pode manter true se preferir)
+      this.focusListMode = false;
+    }
+
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    // traz tabela pro topo com smooth
+    requestAnimationFrame(() => {
+      const wrap = this.tableWrap?.nativeElement;
+      if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // após a animação do sidebar (300ms), recalcula botões/scroll horizontal
+    window.setTimeout(() => {
+      this.updateHorizontalButtons();
+      this.recalcTableMinWidth();
+    }, 320);
+  }
+
+  // (mantive se você ainda quiser usar em outro lugar)
   toggleFocusListMode() {
     this.focusListMode = !this.focusListMode;
-
-    // quando entra no modo foco, fecha o salvar (pra não poluir)
     if (this.focusListMode) this.showSaveInput = false;
 
-    // "subir pro topo" com smooth: traz a tabela pra cima (melhora a UX quando o resto some)
     if (this.focusListMode && isPlatformBrowser(this.platformId)) {
       requestAnimationFrame(() => {
         const wrap = this.tableWrap?.nativeElement;
@@ -229,8 +249,9 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     this.showSaveInput = false;
     this.saveName = '';
 
-    // ✅ reset modo foco
+    // ✅ reset modos foco
     this.focusListMode = false;
+    this.focusUiMode = false;
 
     const input = this.csvInput?.nativeElement;
     if (input) input.value = '';
@@ -300,8 +321,9 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       this.showSaveInput = false;
       this.saveName = '';
 
-      // ✅ reset modo foco ao carregar csv
+      // ✅ reset modos foco ao carregar csv
       this.focusListMode = false;
+      this.focusUiMode = false;
 
       this.idColumnKey = guessIdColumn(parsed.headers) || '';
       this.nameColumnKey = guessNameColumn(parsed.headers) || '';
@@ -357,7 +379,7 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const incMonthly = baseSalary * (pct / 100);
+    const incMonthly = baseSalary * (1 + pct / 100);
     const incAnnual = incMonthly * this.monthsRemaining;
 
     row.__incMonthly = incMonthly;
@@ -383,7 +405,7 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     return 12 - month + 1;
   }
 
-  // ========== ✅ KPIs (AJUSTADO) ==========
+  // ========== ✅ KPIs ==========
   private computeKpis() {
     const hc = this.rows.length || 0;
     this.kpiHcValue = String(hc);
@@ -400,27 +422,18 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
 
     for (const row of this.rows) {
       const baseSalary = parseMoneyToNumber(row[this.salaryColumnKey]);
-      if (isFinite(baseSalary) && baseSalary > 0) {
-        baseMonthlyTotal += baseSalary;
-      }
+      if (isFinite(baseSalary) && baseSalary > 0) baseMonthlyTotal += baseSalary;
 
-      // soma incremento já calculado na linha (mais robusto)
       const inc = (row.__incMonthly as any);
-      if (typeof inc === 'number' && isFinite(inc) && inc > 0) {
-        incMonthlyTotal += inc;
-      }
+      if (typeof inc === 'number' && isFinite(inc) && inc > 0) incMonthlyTotal += inc;
     }
 
     const monthlyWithSim = baseMonthlyTotal + incMonthlyTotal;
-
-    // ✅ Total Mensal agora é Base + Simulações
     this.kpiTotalMonthlyValue = this.brl.format(monthlyWithSim);
 
-    // ✅ Ticket médio com base no Total Mensal (já com sim) / HC
     const avg = hc ? (monthlyWithSim / hc) : 0;
     this.kpiAvgSalaryValue = this.brl.format(avg);
 
-    // ✅ Projeção anual coerente com o total mensal já simulado
     this.monthsRemaining = this.getMonthsRemainingInYear(new Date());
     const annualForecast = monthlyWithSim * this.monthsRemaining;
     this.kpiAnnualForecastValue = this.brl.format(annualForecast);
@@ -632,7 +645,6 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   toggleSaveInput() {
     if (!this.csvLoaded) return;
 
-    // se abrir o salvar, sai do modo foco pra não “sumir” o UI
     if (!this.showSaveInput && this.focusListMode) this.focusListMode = false;
 
     this.showSaveInput = !this.showSaveInput;
@@ -658,15 +670,12 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       rows: this.rows.map(r => ({ ...r })),
     };
 
-    // cache em memória + local
     this.scenarioFullCache.set(scenarioFull.id, scenarioFull);
     this.store.cacheFullScenario(scenarioFull);
 
     try {
-      // salva no DB
       const summary = await this.api.upsert(scenarioFull);
 
-      // atualiza sidebar (summary)
       this.savedScenarios = [summary, ...this.savedScenarios]
         .filter((x, i, arr) => arr.findIndex(y => y.id === x.id) === i)
         .slice(0, 50);
@@ -676,7 +685,6 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       this.store.setScenarioParamOnUrl(summary.id);
       this.showSaveInput = false;
     } catch {
-      // fallback
       this.savedScenarios = [{
         id: scenarioFull.id,
         name: scenarioFull.name,
@@ -695,11 +703,9 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
   }
 
   async loadScenario(id: string) {
-    // 1) tenta cache em memória
     const mem = this.scenarioFullCache.get(id);
     if (mem) { this.applyScenario(mem); return; }
 
-    // 2) tenta cache local (recentFull)
     const local = this.store.loadFullScenario(id);
     if (local) {
       this.scenarioFullCache.set(id, local);
@@ -707,7 +713,6 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // 3) busca do DB
     try {
       const scenario = await this.api.get(id);
       this.scenarioFullCache.set(id, scenario);
@@ -735,8 +740,9 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
 
     this.monthsRemaining = this.getMonthsRemainingInYear(new Date());
 
-    // ✅ sai do foco ao abrir cenário (pra não esconder UI sem querer)
+    // ✅ ao abrir cenário, volta UI normal (evita “sumir” sidebar sem querer)
     this.focusListMode = false;
+    this.focusUiMode = false;
 
     this.recalculateAllRowsSimulations();
     this.computeKpis();
@@ -759,9 +765,7 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     this.store.removeFromCache(id);
     this.scenarioFullCache.delete(id);
 
-    try {
-      await this.api.remove(id);
-    } catch {}
+    try { await this.api.remove(id); } catch {}
 
     const current = this.store.getScenarioParamFromUrl();
     if (current === id) this.store.clearScenarioParamFromUrl();
