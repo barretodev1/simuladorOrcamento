@@ -1,5 +1,6 @@
 <div class="h-screen flex flex-col bg-gray-800 overflow-hidden">
 
+  <!-- HEADER -->
   <div class="shrink-0 bg-gray-800 text-white p-3 font-sans">
     <h1 class="w-full text-center text-sm quick">
       Você está em produção
@@ -9,32 +10,125 @@
   <div class="flex-1 min-h-0 bg-white rounded-t-3xl overflow-hidden flex">
 
     <!-- SIDEBAR -->
-    <div
-      class="w-90 h-full bg-white border-r border-gray-100 flex flex-col p-5 transition-all duration-300 overflow-hidden">
+    <div class="w-90 h-full bg-white border-r border-gray-100 flex flex-col p-5 min-h-0 overflow-hidden">
 
-      <div class="flex items-center bg-white gap-2 w-full">
-        <input type="text" placeholder="Buscar" [(ngModel)]="searchTerm" (input)="onSearch()"
-          class="flex-1 h-10 rounded-xl bg-gray-300 px-4 text-gray-700 outline-none" />
+      <!-- pesquisa (igual simulacaorecorrente) -->
+      <div class="flex items-center bg-white gap-2 w-full shrink-0">
+        <input
+          type="text"
+          placeholder="Buscar"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          class="flex-1 h-10 rounded-xl bg-gray-300 px-4 text-gray-700 placeholder:text-gray-400 outline-none"
+        />
 
-        <button type="button"
-          class="h-10 w-12 rounded-xl bg-gray-900 hover:bg-gray-600 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            class="h-5 w-5 text-white">
+        <button
+          type="button"
+          (click)="onSearch()"
+          class="h-10 w-12 rounded-xl bg-gray-900 hover:bg-gray-600 cursor-pointer flex items-center justify-center"
+          aria-label="Buscar"
+          title="Buscar"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-white">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
         </button>
       </div>
 
-      <div class="mt-4 flex flex-col flex-1 overflow-hidden w-full">
-        <app-menu-options *ngFor="let item of orderedMenu; trackBy: trackByKey" [imagePath]="item.imagePath"
-          [title]="item.title" [route]="item.route">
-        </app-menu-options>
+      <!-- menu + salvos -->
+      <div class="mt-4 flex-1 min-h-0 overflow-auto w-full">
+
+        <!-- menu principal -->
+        <app-menu-options
+          *ngFor="let item of orderedMenu; trackBy: trackByKey"
+          [imagePath]="item.imagePath"
+          [title]="item.title"
+          [route]="item.route"
+        ></app-menu-options>
+
+        <!-- ✅ SIMULAÇÕES SALVAS (abaixo de Configurações, antes do user) -->
+        <div *ngIf="savedScenarios.length > 0" class="w-full mt-1 pt-4 border-t border-gray-100">
+          <div class="flex items-center justify-between px-1">
+            <div class="text-xs font-semibold text-gray-500 tracking-wide uppercase">
+              Simulações salvas
+            </div>
+            <div class="text-[11px] text-gray-400">
+              (clique pra abrir)
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2 max-h-42 overflow-auto pr-1">
+            <div
+              *ngFor="let s of savedScenarios"
+              class="group w-full rounded-xl border border-gray-100 bg-white hover:bg-gray-50 transition-colors"
+            >
+              <div class="flex items-center justify-between gap-2 px-3 py-2">
+
+                <button
+                  type="button"
+                  (click)="loadScenario(s.id)"
+                  class="text-left flex-1 min-w-0"
+                  title="Abrir simulação"
+                >
+                  <div class="text-sm font-semibold text-gray-900 truncate">
+                    {{ s.name }}
+                  </div>
+                  <div class="text-[11px] text-gray-500 truncate">
+                    {{ s.fileName }} • {{ s.salaryColumnKey || 'salário não definido' }}
+                  </div>
+                </button>
+
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                  <!-- copiar link -->
+                  <button
+                    type="button"
+                    (click)="copyScenarioLink(s.id)"
+                    class="h-8 w-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                    title="Copiar link"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-700" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10 13a5 5 0 0 0 7.07 0l1.41-1.41a5 5 0 0 0 0-7.07 5 5 0 0 0-7.07 0L10 5" />
+                      <path d="M14 11a5 5 0 0 0-7.07 0L5.52 12.4a5 5 0 0 0 0 7.07 5 5 0 0 0 7.07 0L14 19" />
+                    </svg>
+                  </button>
+
+                  <!-- excluir -->
+                  <button
+                    type="button"
+                    (click)="deleteScenario(s.id)"
+                    class="h-8 w-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                    title="Excluir"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-700" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="M19 6l-1 14H6L5 6" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                    </svg>
+                  </button>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="mt-auto w-full pt-3 bg-white">
-        <app-menu-options imagePath="/user.svg" [title]="user.name" route="/simulador_de_gastos/conta" [isUser]="true">
-        </app-menu-options>
+      <!-- user (mantém o menu-options pro logout) -->
+      <div class="shrink-0 w-full pt-3 bg-white">
+        <app-menu-options
+          imagePath="/user.svg"
+          [title]="user.name || 'Conta'"
+          route="/simulador_de_gastos/conta"
+          [isUser]="true"
+        ></app-menu-options>
       </div>
 
     </div>
@@ -42,6 +136,7 @@
     <!-- CONTEÚDO -->
     <div class="flex-1 bg-white flex flex-col min-h-0 p-6 gap-6">
 
+      <!-- KPIs -->
       <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <app-kpi-card title="HC Atual" [value]="kpiHc"></app-kpi-card>
         <app-kpi-card title="Total Mensal" [value]="kpiMonthly"></app-kpi-card>
@@ -49,64 +144,171 @@
         <app-kpi-card title="Projeção Anual" [value]="kpiAnnual"></app-kpi-card>
       </div>
 
+      <!-- CARD PRINCIPAL -->
       <div class="flex-1 flex border border-gray-200 rounded-2xl bg-white shadow-sm flex flex-col overflow-hidden">
 
-        <div class="p-4 border-b flex flex-col border-gray-100">
+        <!-- HEADER DO CARD -->
+        <div class="shrink-0 p-4 border-b border-gray-100 flex flex-col gap-3">
 
-          <div class="flex items-center gap-3 mb-4">
-            
+          <!-- topo: botões -->
+          <div class="flex items-start justify-between gap-4">
 
-            <input #csvInput type="file" accept=".csv" hidden (change)="onCsvSelected($event)">
-            <button (click)="csvInput.click()" class="h-9 px-4 rounded-xl bg-gray-900 text-white text-sm">
-              Importar CSV
-            </button>  
+            <div class="flex items-center gap-2 shrink-0">
 
+              <input #csvInput type="file" accept=".csv,text/csv" class="hidden" (change)="onCsvSelected($event)" />
 
-            <button *ngIf="csvLoaded" (click)="addSimulation()"
-              class="h-9 px-4 rounded-xl bg-emerald-600 text-white text-sm">
-              + Nova Simulação
-            </button>
+              <button
+                type="button"
+                (click)="csvInput.click()"
+                class="h-9 px-3 rounded-xl bg-gray-900 text-white text-sm hover:bg-gray-700 transition-colors"
+              >
+                Importar CSV
+              </button>
 
-            <div *ngIf="csvLoaded" class="flex justify-end items-center">
-              <button (click)="toggleFocusMode()"
-                class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 transition">
+              <button
+                *ngIf="csvLoaded"
+                type="button"
+                (click)="addSimulation()"
+                class="h-9 px-3 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500 transition-colors"
+              >
+                + Nova Simulação
+              </button>
+
+              <!-- ✅ SALVAR PADRÃO SIMULACAORECORRENTE -->
+              <button
+                type="button"
+                (click)="toggleSaveInput()"
+                [disabled]="!csvLoaded"
+                class="h-9 px-3 rounded-xl text-sm transition-colors"
+                [ngClass]="csvLoaded ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-gray-200 text-gray-500 cursor-not-allowed'"
+                title="Salvar esta simulação"
+              >
+                Salvar
+              </button>
+
+            </div>
+
+            <!-- modo foco (mantém o seu atual) -->
+            <div *ngIf="csvLoaded" class="flex items-center justify-center">
+              <button
+                type="button"
+                (click)="toggleFocusMode()"
+                class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50"
+              >
                 {{ focusMode ? 'Voltar' : 'Modo foco' }}
               </button>
             </div>
+
           </div>
 
-          <!-- ESCONDE NO FOCO -->
+          <!-- ✅ INPUT SALVAR PADRÃO SIMULACAORECORRENTE (smooth + style) -->
+          <div
+            class="overflow-hidden transition-all duration-300 ease-in-out"
+            [ngClass]="showSaveInput ? 'max-h-[260px] opacity-100 mt-0' : 'max-h-0 opacity-0 -mt-2 pointer-events-none'"
+          >
+            <div class="p-4 bg-emerald-50 rounded-2xl">
+              <div class="flex flex-wrap items-center gap-3">
+                <div class="text-sm font-medium text-emerald-900">Nome da simulação:</div>
+
+                <input
+                  type="text"
+                  [(ngModel)]="saveName"
+                  [ngModelOptions]="{standalone:true}"
+                  class="h-9 w-80 max-w-full rounded-xl border border-emerald-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-100"
+                  placeholder="Ex: Média de contratações Q1"
+                />
+
+                <button
+                  type="button"
+                  (click)="saveScenario()"
+                  class="h-9 px-3 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500 transition-colors"
+                >
+                  Confirmar salvar
+                </button>
+
+                <button
+                  type="button"
+                  (click)="toggleSaveInput()"
+                  class="h-9 px-3 rounded-xl bg-white text-emerald-800 text-sm border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+
+              <div class="mt-2 text-xs text-emerald-800">
+                Ao salvar, ela aparece na sidebar (abaixo de Configurações).
+              </div>
+            </div>
+          </div>
+
+          <!-- CONFIGURAÇÕES (some no modo foco, mantém sua regra) -->
           <div *ngIf="csvLoaded && !focusMode" class="grid grid-cols-3 gap-6">
 
             <div>
               <label class="text-xs text-gray-500">Coluna Área</label>
-              <select [(ngModel)]="areaColumn" (change)="extractUniques(); recalculate()"
-                class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm w-full">
+              <select
+                [(ngModel)]="areaColumn"
+                (change)="extractUniques(); recalculate()"
+                class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm w-full"
+              >
                 <option *ngFor="let h of headers" [value]="h">{{ h }}</option>
               </select>
             </div>
 
             <div>
               <label class="text-xs text-gray-500">Coluna Cargo</label>
-              <select [(ngModel)]="roleColumn" (change)="extractUniques(); recalculate()"
-                class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm w-full">
+              <select
+                [(ngModel)]="roleColumn"
+                (change)="extractUniques(); recalculate()"
+                class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm w-full"
+              >
                 <option *ngFor="let h of headers" [value]="h">{{ h }}</option>
               </select>
             </div>
 
             <div>
               <label class="text-xs text-gray-500">Coluna Salário</label>
-              <select [(ngModel)]="salaryColumn" (change)="recalculate()"
-                class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm w-full">
+              <select
+                [(ngModel)]="salaryColumn"
+                (change)="recalculate()"
+                class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm w-full"
+              >
                 <option *ngFor="let h of headers" [value]="h">{{ h }}</option>
               </select>
             </div>
 
           </div>
+
         </div>
 
-        <div class="flex-1 overflow-auto transition-all duration-300" [ngClass]="focusMode ? 'px-6 pb-6' : 'p-4'">
+        <!-- CORPO -->
+        <div class="flex-1 overflow-auto p-4">
 
+          <!-- TEXTO CENTRAL -->
+          <div *ngIf="!csvLoaded" class="h-full flex items-center justify-center">
+            <div class="text-center flex flex-col gap-4 max-w-xl">
+
+              <div class="text-gray-900 text-base font-semibold quick">
+                Importe uma base para iniciar a simulação
+              </div>
+
+              <div class="text-gray-500 text-sm">
+                Faça upload de um CSV contendo Área, Cargo e Salário.
+                Depois você poderá simular admissões e demissões.
+              </div>
+
+              <button
+                type="button"
+                (click)="csvInput.click()"
+                class="h-10 px-6 rounded-xl bg-gray-900 text-white text-sm hover:bg-gray-700 transition-colors"
+              >
+                Importar CSV
+              </button>
+
+            </div>
+          </div>
+
+          <!-- TABELA -->
           <table *ngIf="csvLoaded" class="w-full text-sm border-separate border-spacing-y-2">
 
             <thead>
@@ -122,45 +324,86 @@
             </thead>
 
             <tbody>
-              <tr *ngFor="let sim of simulations; let i = index" class="outline-none rounded-xl">
+              <tr *ngFor="let sim of simulations; let i = index">
 
                 <td class="px-3">
-                  <select [(ngModel)]="sim.area" (change)="recalculate()"
-                    class="h-9 rounded-xl border outline-none border-gray-200 bg-white px-3 text-sm w-full">
-                    <option *ngFor="let a of uniqueAreas" [value]="a">{{ a }}</option>
+                  <div class="flex items-center gap-2">
+                    <select
+                      [(ngModel)]="sim.area"
+                      (change)="onAreaChange(sim)"
+                      class="h-9 rounded-xl border border-gray-200 px-3 text-sm w-full"
+                    >
+                      <option *ngFor="let a of uniqueAreas" [value]="a">
+                        {{ a }}
+                      </option>
+                    </select>
+
+                    <button
+                      type="button"
+                      (click)="copySimulation(sim)"
+                      class="h-8 w-8 rounded-lg border border-gray-200 bg-white hover:bg-gray-100"
+                      title="Copiar linha"
+                    >
+                      📋
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="pasteSimulation(sim)"
+                      [disabled]="!copiedSimulation"
+                      class="h-8 w-8 rounded-lg border border-gray-200 bg-white hover:bg-gray-100 disabled:opacity-40"
+                      title="Colar linha"
+                    >
+                      📥
+                    </button>
+                  </div>
+                </td>
+
+                <td class="px-3">
+                  <select
+                    [(ngModel)]="sim.role"
+                    (change)="recalculate()"
+                    class="h-9 rounded-xl border border-gray-200 px-3 text-sm w-full"
+                  >
+                    <option *ngFor="let r of sim.availableRoles" [value]="r">
+                      {{ r }}
+                    </option>
                   </select>
                 </td>
 
-                <td class="px-3 py-3">
-                  <select [(ngModel)]="sim.role" (change)="recalculate()"
-                    class="h-9 rounded-xl border outline-none border-gray-200 bg-white px-3 text-sm w-full">
-                    <option *ngFor="let r of uniqueRoles" [value]="r">{{ r }}</option>
-                  </select>
-                </td>
-
-                <td class="px-3 py-3">
-                  <select [(ngModel)]="sim.type" (change)="recalculate()"
-                    class="h-9 rounded-xl border outline-none border-gray-200 bg-white px-3 text-sm w-full">
+                <td class="px-3">
+                  <select
+                    [(ngModel)]="sim.type"
+                    (change)="recalculate()"
+                    class="h-9 rounded-xl border border-gray-200 px-3 text-sm w-full"
+                  >
                     <option value="ADMISSAO">Admissão</option>
                     <option value="DEMISSAO">Demissão</option>
                   </select>
                 </td>
 
-                <td class="px-3 py-3">
-                  <input type="number" [(ngModel)]="sim.qty" (input)="recalculate()"
-                    class="h-9 w-24 rounded-xl border border-gray-200 outline-none px-3 text-sm" />
+                <td class="px-3">
+                  <input
+                    type="number"
+                    [(ngModel)]="sim.qty"
+                    (input)="recalculate()"
+                    class="h-9 w-24 rounded-xl border border-gray-200 px-3 text-sm"
+                  />
                 </td>
 
-                <td class="px-3 py-3 font-medium">
+                <td class="px-3 font-medium">
                   {{ sim.avgFormatted }}
                 </td>
 
-                <td class="px-3 py-3 font-semibold" [ngClass]="sim.total >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                <td
+                  class="px-3 font-semibold"
+                  [ngClass]="sim.total >= 0 ? 'text-emerald-600' : 'text-red-600'"
+                >
                   {{ sim.totalFormatted }}
                 </td>
 
-                <td class="px-3 py-3">
-                  <button (click)="removeSimulation(i)" class="text-xs outline-none text-red-500">
+                <td class="px-3">
+                  <button type="button" (click)="removeSimulation(i)" class="text-xs text-red-500">
                     Remover
                   </button>
                 </td>
@@ -171,7 +414,9 @@
           </table>
 
         </div>
+
       </div>
     </div>
+
   </div>
 </div>

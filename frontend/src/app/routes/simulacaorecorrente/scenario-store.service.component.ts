@@ -4,20 +4,26 @@ import { SavedScenario, SavedScenarioSummary } from './simulacaorecorrente.types
 
 type Cache = {
   summaries: SavedScenarioSummary[];
-  recentFull: SavedScenario[]; // guarda os últimos abertos (pra UX)
+  recentFull: SavedScenario[]; // só UX (últimos abertos)
 };
 
 @Injectable({ providedIn: 'root' })
 export class ScenarioStoreService {
   private platformId = inject(PLATFORM_ID);
 
-  private STORAGE_KEY = 'simulador_saved_scenarios_cache_v2';
+  // ✅ cache “leve” (lista + recentes)
+  private STORAGE_KEY = 'simulador_saved_scenarios_cache_v3';
+
+  // ✅ persistência do cenário completo por id (não depende de “recentes”)
+  private FULL_PREFIX = 'sg_scenario:'; // mantém igual ao que você usou no media
 
   private get isBrowser() {
     return isPlatformBrowser(this.platformId);
   }
 
-  // ===== cache (opcional) =====
+  // =========================
+  // SUMMARIES (lista sidebar)
+  // =========================
   loadSummaries(): SavedScenarioSummary[] {
     if (!this.isBrowser) return [];
     try {
@@ -37,8 +43,43 @@ export class ScenarioStoreService {
     this.writeCache(cache);
   }
 
-  cacheFullScenario(s: SavedScenario) {
+  // =========================
+  // FULL SCENARIO (persistente)
+  // =========================
+  saveFullScenario(s: SavedScenario & any) {
     if (!this.isBrowser) return;
+    try {
+      localStorage.setItem(this.FULL_PREFIX + s.id, JSON.stringify(s));
+    } catch {}
+  }
+
+  loadFullScenarioPersisted(id: string): (SavedScenario & any) | null {
+    if (!this.isBrowser) return null;
+    try {
+      const raw = localStorage.getItem(this.FULL_PREFIX + id);
+      return raw ? (JSON.parse(raw) as any) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  removeFullScenarioPersisted(id: string) {
+    if (!this.isBrowser) return;
+    try {
+      localStorage.removeItem(this.FULL_PREFIX + id);
+    } catch {}
+  }
+
+  // =========================
+  // RECENT FULL (UX)
+  // =========================
+  cacheFullScenario(s: SavedScenario & any) {
+    if (!this.isBrowser) return;
+
+    // ✅ persistente por id (pra sobreviver a refresh/logout)
+    this.saveFullScenario(s);
+
+    // ✅ recente (só UX)
     const cache = this.readCache();
     const next = [s, ...(cache.recentFull || [])]
       .filter((x, i, arr) => arr.findIndex(y => y.id === x.id) === i)
@@ -47,8 +88,14 @@ export class ScenarioStoreService {
     this.writeCache(cache);
   }
 
-  loadFullScenario(id: string): SavedScenario | null {
+  loadFullScenario(id: string): (SavedScenario & any) | null {
     if (!this.isBrowser) return null;
+
+    // 1) tenta o persistente (correto)
+    const persisted = this.loadFullScenarioPersisted(id);
+    if (persisted) return persisted;
+
+    // 2) fallback: recentes (UX)
     const cache = this.readCache();
     const found = (cache.recentFull || []).find(s => s.id === id);
     return found || null;
@@ -56,12 +103,20 @@ export class ScenarioStoreService {
 
   removeFromCache(id: string) {
     if (!this.isBrowser) return;
+
+    // remove summaries + recentFull
     const cache = this.readCache();
     cache.summaries = (cache.summaries || []).filter(s => s.id !== id);
     cache.recentFull = (cache.recentFull || []).filter(s => s.id !== id);
     this.writeCache(cache);
+
+    // remove persistente
+    this.removeFullScenarioPersisted(id);
   }
 
+  // =========================
+  // CACHE IO
+  // =========================
   private readCache(): Cache {
     if (!this.isBrowser) return { summaries: [], recentFull: [] };
     try {
@@ -79,14 +134,19 @@ export class ScenarioStoreService {
 
   private writeCache(cache: Cache) {
     if (!this.isBrowser) return;
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cache));
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cache));
+    } catch {}
   }
 
-  // ===== id + url param =====
+  // =========================
+  // ID + URL PARAM
+  // =========================
   makeId() {
     return 'sc_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   }
 
+  // ✅ padroniza param como "saved"
   getScenarioParamFromUrl(): string | null {
     if (!this.isBrowser) return null;
     try {

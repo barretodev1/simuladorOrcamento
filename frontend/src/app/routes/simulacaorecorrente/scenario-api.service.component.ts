@@ -5,6 +5,17 @@ import { SavedScenario, SavedScenarioSummary } from './simulacaorecorrente.types
 
 const API_BASE = 'http://localhost:3000';
 
+export class ApiHttpError extends Error {
+  constructor(
+    public status: number,
+    public statusText: string,
+    public body: any,
+    public url: string
+  ) {
+    super(`HTTP ${status} ${statusText}`);
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class ScenarioApiService {
   private platformId = inject(PLATFORM_ID);
@@ -14,69 +25,131 @@ export class ScenarioApiService {
     return isPlatformBrowser(this.platformId);
   }
 
-  private headers() {
+  private baseHeaders(): Record<string, string> {
     const token = this.auth.getToken();
     return {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    } as Record<string, string>;
+    };
+  }
+
+  private mergeHeaders(extra?: HeadersInit): Record<string, string> {
+    const out: Record<string, string> = { ...this.baseHeaders() };
+    if (!extra) return out;
+
+    if (extra instanceof Headers) {
+      extra.forEach((v, k) => (out[k] = v));
+      return out;
+    }
+
+    if (Array.isArray(extra)) {
+      extra.forEach(([k, v]) => (out[k] = v));
+      return out;
+    }
+
+    Object.assign(out, extra);
+    return out;
+  }
+
+  private async readBody(res: Response): Promise<any> {
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      try {
+        return await res.json();
+      } catch {
+        return null;
+      }
+    }
+
+    try {
+      return await res.text();
+    } catch {
+      return null;
+    }
   }
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
     if (!this.isBrowser) throw new Error('Not in browser');
 
-    const res = await fetch(`${API_BASE}${path}`, {
-      ...init,
-      headers: { ...this.headers(), ...(init?.headers as any) },
-    });
+    const url = `${API_BASE}${path}`;
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        ...init,
+        headers: this.mergeHeaders(init?.headers),
+      });
+    } catch (e: any) {
+      // erro de rede (API fora, CORS, etc.)
+      throw new ApiHttpError(0, 'NETWORK_ERROR', String(e?.message || e), url);
+    }
 
     if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      throw new Error(`HTTP ${res.status} ${res.statusText} - ${txt}`);
+      const body = await this.readBody(res);
+      throw new ApiHttpError(res.status, res.statusText, body, url);
     }
 
     return (await res.json()) as T;
   }
 
   async list(): Promise<SavedScenarioSummary[]> {
-    const data = await this.request<{ scenarios: SavedScenarioSummary[] }>('/scenarios', { method: 'GET' });
-    // backend manda createdAt como ISO ou número dependendo; normaliza:
-    return (data.scenarios || []).map(s => ({
+    // aceita tanto {scenarios: []} quanto [] (caso seu backend mude)
+    const data = await this.request<any>('/scenarios', { method: 'GET' });
+
+    const arr: any[] = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.scenarios)
+        ? data.scenarios
+        : [];
+
+    return arr.map((s: any) => ({
       ...s,
-      createdAt: typeof (s as any).createdAt === 'string'
-        ? new Date((s as any).createdAt).getTime()
-        : Number((s as any).createdAt),
+      createdAt:
+        typeof s.createdAt === 'string'
+          ? new Date(s.createdAt).getTime()
+          : Number(s.createdAt),
     }));
   }
 
-  async get(id: string): Promise<SavedScenario> {
-    const data = await this.request<{ scenario: any }>(`/scenarios/${encodeURIComponent(id)}`, { method: 'GET' });
-    const s = data.scenario;
+  async get(id: string): Promise<SavedScenario & any> {
+    const data = await this.request<any>(`/scenarios/${encodeURIComponent(id)}`, { method: 'GET' });
+    const s = data?.scenario ?? data;
 
-    return {
+    // 🔥 MUITO IMPORTANTE:
+    // preserva campos extras (ex: areaColumnKey, roleColumnKey, simulations, scenarioType)
+    // mas normaliza os campos base
+    const base: SavedScenario = {
       id: String(s.id),
       name: String(s.name),
-      createdAt: Number(s.createdAt) || Date.now(),
-      fileName: String(s.fileName),
+      createdAt:
+        typeof s.createdAt === 'string'
+          ? new Date(s.createdAt).getTime()
+          : Number(s.createdAt) || Date.now(),
+      fileName: String(s.fileName || ''),
       activeView: s.activeView,
       salaryColumnKey: String(s.salaryColumnKey || ''),
       idColumnKey: String(s.idColumnKey || ''),
       nameColumnKey: String(s.nameColumnKey || ''),
       dataColumns: Array.isArray(s.dataColumns) ? s.dataColumns : [],
       rows: Array.isArray(s.rows) ? s.rows : [],
-    } as SavedScenario;
+    };
+
+    return { ...s, ...base } as any;
   }
 
-  async upsert(scenario: SavedScenario): Promise<SavedScenarioSummary> {
-    const data = await this.request<{ ok: boolean; scenario: SavedScenarioSummary }>(
+  async upsert(scenario: SavedScenario & any): Promise<SavedScenarioSummary> {
+    const data = await this.request<any>(
       '/scenarios',
       { method: 'POST', body: JSON.stringify({ scenario }) }
     );
 
-    const s = data.scenario as any;
+    const s = (data?.scenario ?? data) as any;
     return {
       ...s,
-      createdAt: typeof s.createdAt === 'string' ? new Date(s.createdAt).getTime() : Number(s.createdAt),
+      createdAt:
+        typeof s.createdAt === 'string'
+          ? new Date(s.createdAt).getTime()
+          : Number(s.createdAt),
     };
   }
 
