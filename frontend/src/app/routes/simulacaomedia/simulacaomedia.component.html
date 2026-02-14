@@ -1,38 +1,24 @@
 <div class="h-screen flex flex-col bg-gray-800 overflow-hidden">
-  <!-- header não cresce -->
+
   <div class="shrink-0 bg-gray-800 text-white p-3 font-sans">
     <h1 class="w-full text-center text-sm quick">
       Você está em produção
     </h1>
   </div>
 
-  <!-- ocupa o resto da tela -->
   <div class="flex-1 min-h-0 bg-white rounded-t-3xl overflow-hidden flex">
 
     <!-- SIDEBAR -->
-    <div class="w-90 h-full bg-white border-r border-gray-100 flex flex-col items-start justify-start p-5">
+    <div
+      class="w-90 h-full bg-white border-r border-gray-100 flex flex-col p-5 transition-all duration-300 overflow-hidden">
 
-      <!-- pesquisa -->
       <div class="flex items-center bg-white gap-2 w-full">
-        <input
-          type="text"
-          placeholder="Buscar"
-          [(ngModel)]="searchTerm"
-          (input)="onSearch()"
-          class="flex-1 h-10 rounded-xl bg-gray-300 px-4 text-gray-700 placeholder:text-gray-400 outline-none"
-        />
+        <input type="text" placeholder="Buscar" [(ngModel)]="searchTerm" (input)="onSearch()"
+          class="flex-1 h-10 rounded-xl bg-gray-300 px-4 text-gray-700 outline-none" />
 
-        <button
-          type="button"
-          (click)="onSearch()"
-          class="h-10 w-12 rounded-xl bg-gray-900 hover:bg-gray-600 cursor-pointer flex items-center justify-center"
-          aria-label="Buscar"
-          title="Buscar"
-        >
-          <!-- lupa -->
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round"
+        <button type="button"
+          class="h-10 w-12 rounded-xl bg-gray-900 hover:bg-gray-600 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             class="h-5 w-5 text-white">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -40,42 +26,152 @@
         </button>
       </div>
 
-      <!-- menu -->
-      <div class="mt-4 flex flex-col flex-1 min-h-0 overflow-hidden w-full">
-        <app-menu-options
-          *ngFor="let item of orderedMenu; trackBy: trackByKey"
-          [imagePath]="item.imagePath"
-          [title]="item.title"
-          [route]="item.route"
-        ></app-menu-options>
+      <div class="mt-4 flex flex-col flex-1 overflow-hidden w-full">
+        <app-menu-options *ngFor="let item of orderedMenu; trackBy: trackByKey" [imagePath]="item.imagePath"
+          [title]="item.title" [route]="item.route">
+        </app-menu-options>
       </div>
 
-      <!-- user (fora da busca/ordenação) -->
-      <div class="mt-auto w-full p-3 bg-white">
-        <app-menu-options
-          imagePath="/user.svg"
-          [title]="user.name"
-          route="/simulador_de_gastos/conta"
-          [isUser]="true"
-        ></app-menu-options>
+      <div class="mt-auto w-full pt-3 bg-white">
+        <app-menu-options imagePath="/user.svg" [title]="user.name" route="/simulador_de_gastos/conta" [isUser]="true">
+        </app-menu-options>
       </div>
+
     </div>
 
-    <!-- ÁREA DE CONTEÚDO -->
-    <div class="flex-1 bg-white rounded-t-3xl overflow-hidden min-h-0">
-      <div class="h-full min-h-0 flex flex-col gap-4 p-4">
+    <!-- CONTEÚDO -->
+    <div class="flex-1 bg-white flex flex-col min-h-0 p-6 gap-6">
 
-        <div class="shrink-0">
-          <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            <app-kpi-card title="HC Atual" subLine="HC da última base atualizada"></app-kpi-card>
-            <app-kpi-card title="Total Mensal" subLine="Custo Folha - Mensal"></app-kpi-card>
-            <app-kpi-card title="Custo Médio | HC" subLine="Ticket Médio por Headcount"></app-kpi-card>
-            <app-kpi-card title="Projeção Anual" subLine="Forecast de Gastos"></app-kpi-card>
+      <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <app-kpi-card title="HC Atual" [value]="kpiHc"></app-kpi-card>
+        <app-kpi-card title="Total Mensal" [value]="kpiMonthly"></app-kpi-card>
+        <app-kpi-card title="Custo Médio | HC" [value]="kpiAvg"></app-kpi-card>
+        <app-kpi-card title="Projeção Anual" [value]="kpiAnnual"></app-kpi-card>
+      </div>
+
+      <div class="flex-1 flex border border-gray-200 rounded-2xl bg-white shadow-sm flex flex-col overflow-hidden">
+
+        <div class="p-4 border-b flex flex-col border-gray-100">
+
+          <div class="flex items-center gap-3 mb-4">
+            
+
+            <input #csvInput type="file" accept=".csv" hidden (change)="onCsvSelected($event)">
+            <button (click)="csvInput.click()" class="h-9 px-4 rounded-xl bg-gray-900 text-white text-sm">
+              Importar CSV
+            </button>  
+
+
+            <button *ngIf="csvLoaded" (click)="addSimulation()"
+              class="h-9 px-4 rounded-xl bg-emerald-600 text-white text-sm">
+              + Nova Simulação
+            </button>
+
+            <div *ngIf="csvLoaded" class="flex justify-end items-center">
+              <button (click)="toggleFocusMode()"
+                class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 transition">
+                {{ focusMode ? 'Voltar' : 'Modo foco' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- ESCONDE NO FOCO -->
+          <div *ngIf="csvLoaded && !focusMode" class="grid grid-cols-3 gap-6">
+
+            <div>
+              <label class="text-xs text-gray-500">Coluna Área</label>
+              <select [(ngModel)]="areaColumn" (change)="extractUniques(); recalculate()"
+                class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm w-full">
+                <option *ngFor="let h of headers" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-500">Coluna Cargo</label>
+              <select [(ngModel)]="roleColumn" (change)="extractUniques(); recalculate()"
+                class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm w-full">
+                <option *ngFor="let h of headers" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-500">Coluna Salário</label>
+              <select [(ngModel)]="salaryColumn" (change)="recalculate()"
+                class="h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm w-full">
+                <option *ngFor="let h of headers" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+
           </div>
         </div>
 
+        <div class="flex-1 overflow-auto transition-all duration-300" [ngClass]="focusMode ? 'px-6 pb-6' : 'p-4'">
+
+          <table *ngIf="csvLoaded" class="w-full text-sm border-separate border-spacing-y-2">
+
+            <thead>
+              <tr class="text-xs text-gray-500 uppercase tracking-wide">
+                <th class="text-left px-3">Área</th>
+                <th class="text-left px-3">Cargo</th>
+                <th class="text-left px-3">Tipo</th>
+                <th class="text-left px-3">Qtd</th>
+                <th class="text-left px-3">Média</th>
+                <th class="text-left px-3">Impacto</th>
+                <th></th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let sim of simulations; let i = index" class="outline-none rounded-xl">
+
+                <td class="px-3">
+                  <select [(ngModel)]="sim.area" (change)="recalculate()"
+                    class="h-9 rounded-xl border outline-none border-gray-200 bg-white px-3 text-sm w-full">
+                    <option *ngFor="let a of uniqueAreas" [value]="a">{{ a }}</option>
+                  </select>
+                </td>
+
+                <td class="px-3 py-3">
+                  <select [(ngModel)]="sim.role" (change)="recalculate()"
+                    class="h-9 rounded-xl border outline-none border-gray-200 bg-white px-3 text-sm w-full">
+                    <option *ngFor="let r of uniqueRoles" [value]="r">{{ r }}</option>
+                  </select>
+                </td>
+
+                <td class="px-3 py-3">
+                  <select [(ngModel)]="sim.type" (change)="recalculate()"
+                    class="h-9 rounded-xl border outline-none border-gray-200 bg-white px-3 text-sm w-full">
+                    <option value="ADMISSAO">Admissão</option>
+                    <option value="DEMISSAO">Demissão</option>
+                  </select>
+                </td>
+
+                <td class="px-3 py-3">
+                  <input type="number" [(ngModel)]="sim.qty" (input)="recalculate()"
+                    class="h-9 w-24 rounded-xl border border-gray-200 outline-none px-3 text-sm" />
+                </td>
+
+                <td class="px-3 py-3 font-medium">
+                  {{ sim.avgFormatted }}
+                </td>
+
+                <td class="px-3 py-3 font-semibold" [ngClass]="sim.total >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                  {{ sim.totalFormatted }}
+                </td>
+
+                <td class="px-3 py-3">
+                  <button (click)="removeSimulation(i)" class="text-xs outline-none text-red-500">
+                    Remover
+                  </button>
+                </td>
+
+              </tr>
+            </tbody>
+
+          </table>
+
+        </div>
       </div>
     </div>
-
   </div>
 </div>
