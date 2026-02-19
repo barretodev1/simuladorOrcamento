@@ -57,18 +57,9 @@ export class ScenarioApiService {
   private async readBody(res: Response): Promise<any> {
     const ct = res.headers.get('content-type') || '';
     if (ct.includes('application/json')) {
-      try {
-        return await res.json();
-      } catch {
-        return null;
-      }
+      try { return await res.json(); } catch { return null; }
     }
-
-    try {
-      return await res.text();
-    } catch {
-      return null;
-    }
+    try { return await res.text(); } catch { return null; }
   }
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -78,10 +69,7 @@ export class ScenarioApiService {
 
     let res: Response;
     try {
-      res = await fetch(url, {
-        ...init,
-        headers: this.mergeHeaders(init?.headers),
-      });
+      res = await fetch(url, { ...init, headers: this.mergeHeaders(init?.headers) });
     } catch (e: any) {
       throw new ApiHttpError(0, 'NETWORK_ERROR', String(e?.message || e), url);
     }
@@ -105,10 +93,7 @@ export class ScenarioApiService {
 
     return arr.map((s: any) => ({
       ...s,
-      createdAt:
-        typeof s.createdAt === 'string'
-          ? new Date(s.createdAt).getTime()
-          : Number(s.createdAt),
+      createdAt: typeof s.createdAt === 'string' ? new Date(s.createdAt).getTime() : Number(s.createdAt),
     }));
   }
 
@@ -119,10 +104,7 @@ export class ScenarioApiService {
     const base: SavedScenario = {
       id: String(s.id),
       name: String(s.name),
-      createdAt:
-        typeof s.createdAt === 'string'
-          ? new Date(s.createdAt).getTime()
-          : Number(s.createdAt) || Date.now(),
+      createdAt: typeof s.createdAt === 'string' ? new Date(s.createdAt).getTime() : Number(s.createdAt) || Date.now(),
       fileName: String(s.fileName || ''),
       activeView: s.activeView,
       salaryColumnKey: String(s.salaryColumnKey || ''),
@@ -139,7 +121,7 @@ export class ScenarioApiService {
     const body = {
       scenario: {
         ...scenario,
-        scenarioType: scenario.scenarioType || 'media', // backend força, mas ok mandar
+        scenarioType: scenario.scenarioType || 'media',
       },
     };
 
@@ -152,10 +134,7 @@ export class ScenarioApiService {
 
     return {
       ...s,
-      createdAt:
-        typeof s.createdAt === 'string'
-          ? new Date(s.createdAt).getTime()
-          : Number(s.createdAt),
+      createdAt: typeof s.createdAt === 'string' ? new Date(s.createdAt).getTime() : Number(s.createdAt),
     };
   }
 
