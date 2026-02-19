@@ -6,12 +6,10 @@ export type MenuItem = {
 };
 
 export type ActiveView = 'area' | 'empresa';
-export type SimType = '' | 'MERITO' | 'PROMOCAO';
 
 export type CsvRow = {
   [key: string]: string | number | null;
 
-  __simType: SimType;
   __percent: number | null;
 
   __incMonthly: number | null;

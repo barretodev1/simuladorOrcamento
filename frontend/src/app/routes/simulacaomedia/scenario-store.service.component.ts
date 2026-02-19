@@ -1,6 +1,6 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { SavedScenario, SavedScenarioSummary } from './simulacaorecorrente.types.component';
+import { SavedScenario, SavedScenarioSummary } from '../simulacaomedia/simulacaomedia.types.component';
 
 type Cache = {
   summaries: SavedScenarioSummary[];
@@ -12,10 +12,10 @@ export class ScenarioStoreService {
   private platformId = inject(PLATFORM_ID);
 
   // ✅ cache “leve” (lista + recentes)
-  private STORAGE_KEY = 'simulador_recorrente_saved_scenarios_cache_v3';
+  private STORAGE_KEY = 'simulador_media_saved_scenarios_cache_v3';
 
   // ✅ persistência do cenário completo por id (não depende de “recentes”)
-  private FULL_PREFIX = 'sg_recorrente_scenario:'; // mantém igual ao que você usou no media
+  private FULL_PREFIX = 'sg_media_scenario:'; // mantém igual ao que você usou no media
 
   private get isBrowser() {
     return isPlatformBrowser(this.platformId);

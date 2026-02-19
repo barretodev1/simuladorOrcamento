@@ -4,13 +4,13 @@ const requireAuth = require("../middlewares/requireAuth");
 
 const router = express.Router();
 
-// este router é SEMPRE do tipo recorrente
-const SCENARIO_TYPE = "recorrente";
+// este router é SEMPRE do tipo media
+const SCENARIO_TYPE = "media";
 
 // todas as rotas abaixo exigem login
 router.use(requireAuth);
 
-// LISTA (resumo p/ sidebar) - não manda rows pra não pesar
+// LISTA (resumo p/ sidebar)
 router.get("/", async (req, res) => {
   try {
     const userId = String(req.user?.sub ?? "");
@@ -40,7 +40,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET 1 cenário completo (com rows/data_columns)
+// GET 1 cenário completo
 router.get("/:id", async (req, res) => {
   try {
     const userId = String(req.user?.sub ?? "");
@@ -75,7 +75,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// UPSERT (salva ou atualiza)
+// UPSERT
 router.post("/", async (req, res) => {
   try {
     const userId = String(req.user?.sub ?? "");
@@ -106,12 +106,12 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "dataColumns e rows precisam ser arrays." });
     }
 
-    // createdAt opcional (se não vier, o banco usa now())
+    // createdAt opcional
     const createdAtMs = Number(s.createdAt ?? NaN);
     const hasCreatedAt = Number.isFinite(createdAtMs) && createdAtMs > 0;
     const createdAtSql = hasCreatedAt ? new Date(createdAtMs).toISOString() : null;
 
-    // força tipo recorrente (não depende do front)
+    // força tipo media (não depende do front)
     const scenarioType = SCENARIO_TYPE;
 
     const q = await pool.query(

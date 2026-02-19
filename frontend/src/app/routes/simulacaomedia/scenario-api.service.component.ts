@@ -1,10 +1,10 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from '@/auth/auth.service';
-import { SavedScenario, SavedScenarioSummary } from './simulacaorecorrente.types.component';
+import { SavedScenario, SavedScenarioSummary } from '../simulacaomedia/simulacaomedia.types.component';
 
 const API_BASE = 'http://localhost:3000';
-const ROUTE_BASE = '/simulacao_recorrente';
+const ROUTE_BASE = '/simulacao_media';
 
 export class ApiHttpError extends Error {
   constructor(
@@ -132,16 +132,14 @@ export class ScenarioApiService {
       rows: Array.isArray(s.rows) ? s.rows : [],
     };
 
-    // preserva extras (scenarioType, areaColumnKey, etc.)
     return { ...s, ...base } as any;
   }
 
   async upsert(scenario: SavedScenario & any): Promise<SavedScenarioSummary> {
-    // backend já força scenario_type='recorrente', mas manter aqui não atrapalha
     const body = {
       scenario: {
         ...scenario,
-        scenarioType: scenario.scenarioType || 'recorrente',
+        scenarioType: scenario.scenarioType || 'media', // backend força, mas ok mandar
       },
     };
 

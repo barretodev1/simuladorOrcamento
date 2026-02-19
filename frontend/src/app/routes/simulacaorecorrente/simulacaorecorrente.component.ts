@@ -83,9 +83,10 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
 
   peopleSearchTerm = '';
   peopleSearchError = '';
+  filteredRows: CsvRow[] = [];
   idColumnKey = '';
   nameColumnKey = '';
-  filteredRows: CsvRow[] = [];
+
 
   private brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   monthsRemaining = this.getMonthsRemainingInYear(new Date());
@@ -134,6 +135,7 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     this.computeKpis();
   }
 
+
   ngAfterViewInit() {
     if (!isPlatformBrowser(this.platformId)) return;
     this.syncTableUiAfterRender();
@@ -147,10 +149,11 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
 
   private async refreshFromApi() {
     try {
+      if (!this.auth.getToken()) return; // ✅ não chama sem token
       const list = await this.api.list();
       this.savedScenarios = list;
       this.store.saveSummaries(list);
-    } catch {
+    } catch (e) {
       // mantém cache local
     }
   }
@@ -657,7 +660,7 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     const name = (this.saveName || '').trim();
     if (!name) { this.csvError = 'Dê um nome para salvar a simulação.'; return; }
 
-    const scenarioFull: SavedScenario = {
+    const scenarioFull: SavedScenario & any = {
       id: this.store.makeId(),
       name,
       createdAt: Date.now(),
@@ -668,6 +671,7 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
       nameColumnKey: this.nameColumnKey || '',
       dataColumns: this.dataColumns.map(c => ({ ...c })),
       rows: this.rows.map(r => ({ ...r })),
+      scenarioType: 'recorrente',
     };
 
     this.scenarioFullCache.set(scenarioFull.id, scenarioFull);
@@ -765,7 +769,7 @@ export class SimulacaorecorrenteComponent implements AfterViewInit, OnDestroy {
     this.store.removeFromCache(id);
     this.scenarioFullCache.delete(id);
 
-    try { await this.api.remove(id); } catch {}
+    try { await this.api.remove(id); } catch { }
 
     const current = this.store.getScenarioParamFromUrl();
     if (current === id) this.store.clearScenarioParamFromUrl();

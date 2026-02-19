@@ -7,18 +7,24 @@ const { Resend } = require("resend");
 const pool = require("./db");
 const { sendEmail } = require("./mailer");
 const scenariosRouter = require("./routes/scenarios");
+const scenariosRouterMedia = require("./routes/scenariosmedia");
 
 const app = express();
-
 const FRONTEND_ORIGIN =
   process.env.FRONTEND_ORIGIN || process.env.APP_URL || "http://localhost:4200";
 
-app.use(cors({
-  origin: FRONTEND_ORIGIN,
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(
+  cors({
+    origin: FRONTEND_ORIGIN,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "DELETE", "OPTIONS"],
+  })
+);
+
 app.use(express.json({ limit: "25mb" }));
-app.use("/scenarios", scenariosRouter);
+app.use("/simulacao_recorrente", scenariosRouter);
+app.use("/simulacao_media", scenariosRouterMedia);
+
 
 // Resend (se não tiver key, funciona em modo dev logando o código)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;

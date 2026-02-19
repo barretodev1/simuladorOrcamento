@@ -74,7 +74,7 @@
                     {{ s.name }}
                   </div>
                   <div class="text-[11px] text-gray-500 truncate">
-                    {{ s.fileName }} • {{ s.salaryColumnKey || 'salário não definido' }}
+                    {{ s.fileName }} - {{ s.createdAt | date:'dd/MM ° HH:mm' }}
                   </div>
                 </button>
 

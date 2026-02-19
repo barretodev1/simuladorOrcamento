@@ -72,8 +72,8 @@
                   class="text-left flex-1 min-w-0"
                   title="Abrir simulação"
                 >
-                  <div class="text-sm font-semibold text-gray-900 truncate">
-                    {{ s.name }}
+                  <div class="text-sm font-semibold flex flex-col text-gray-900 truncate">
+                    {{ s.name }} 
                   </div>
                   <div class="text-[11px] text-gray-500 truncate">
                     {{ s.fileName }} • {{ s.salaryColumnKey || 'salário não definido' }}
@@ -174,7 +174,7 @@
                 + Nova Simulação
               </button>
 
-              <!-- ✅ SALVAR PADRÃO SIMULACAORECORRENTE -->
+              
               <button
                 type="button"
                 (click)="toggleSaveInput()"
@@ -201,7 +201,7 @@
 
           </div>
 
-          <!-- ✅ INPUT SALVAR PADRÃO SIMULACAORECORRENTE (smooth + style) -->
+          
           <div
             class="overflow-hidden transition-all duration-300 ease-in-out"
             [ngClass]="showSaveInput ? 'max-h-[260px] opacity-100 mt-0' : 'max-h-0 opacity-0 -mt-2 pointer-events-none'"
