@@ -65,12 +65,200 @@
     <div class="flex-1 bg-white rounded-t-3xl overflow-hidden min-h-0">
       <div class="h-full min-h-0 flex flex-col gap-4 p-4">
 
+        <!-- KPIs -->
         <div class="shrink-0">
           <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            <app-kpi-card title="HC Atual" subLine="HC da última base atualizada"></app-kpi-card>
-            <app-kpi-card title="Total Mensal" subLine="Custo Folha - Mensal"></app-kpi-card>
-            <app-kpi-card title="Custo Médio | HC" subLine="Ticket Médio por Headcount"></app-kpi-card>
-            <app-kpi-card title="Projeção Anual" subLine="Forecast de Gastos"></app-kpi-card>
+            <app-kpi-card title="HC Atual" [value]="kpiHc" subLine="HC da última base do cenário selecionado"></app-kpi-card>
+            <app-kpi-card title="Total Mensal" [value]="kpiMonthly" subLine="Custo mensal do cenário selecionado"></app-kpi-card>
+            <app-kpi-card title="Custo Médio | HC" [value]="kpiAvg" subLine="Ticket médio (Mensal / HC)"></app-kpi-card>
+            <app-kpi-card title="Projeção Anual" [value]="kpiAnnual" subLine="Projeção do cenário selecionado"></app-kpi-card>
+          </div>
+
+          <div class="mt-2 text-xs text-gray-500">
+            <span class="text-gray-900 font-medium">Selecionado:</span>
+            <span *ngIf="selectedScenarioLabel; else noneSel" class="text-gray-700"> {{ selectedScenarioLabel }}</span>
+            <ng-template #noneSel> nenhum (clique em um cenário salvo abaixo)</ng-template>
+          </div>
+
+          <div *ngIf="historyError" class="mt-1 text-xs text-red-600">
+            {{ historyError }}
+          </div>
+        </div>
+
+        <!-- CARD PRINCIPAL: HISTÓRICOS -->
+        <div class="flex-1 min-h-0">
+          <div class="h-full min-h-0 border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col">
+
+            <!-- header do card -->
+            <div class="shrink-0 p-4 border-b border-gray-100 flex flex-col gap-3">
+
+              <div class="flex items-center justify-between gap-3">
+                <!-- abas -->
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    (click)="setTab('saved')"
+                    class="h-9 px-3 rounded-xl text-sm border transition-colors"
+                    [ngClass]="activeTab==='saved' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                  >
+                    Salvos ({{ savedScenarios.length }})
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="setTab('deleted')"
+                    class="h-9 px-3 rounded-xl text-sm border transition-colors"
+                    [ngClass]="activeTab==='deleted' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+                  >
+                    Deletados ({{ deletedScenarios.length }})
+                  </button>
+                </div>
+
+                <!-- filtro tipo -->
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    (click)="setTypeFilter('all')"
+                    class="h-9 px-3 rounded-xl text-sm border"
+                    [ngClass]="typeFilter==='all' ? 'bg-gray-100 border-gray-200 text-gray-900' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'"
+                  >
+                    Todos
+                  </button>
+                  <button
+                    type="button"
+                    (click)="setTypeFilter('recorrente')"
+                    class="h-9 px-3 rounded-xl text-sm border"
+                    [ngClass]="typeFilter==='recorrente' ? 'bg-gray-100 border-gray-200 text-gray-900' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'"
+                  >
+                    Recorrente
+                  </button>
+                  <button
+                    type="button"
+                    (click)="setTypeFilter('media')"
+                    class="h-9 px-3 rounded-xl text-sm border"
+                    [ngClass]="typeFilter==='media' ? 'bg-gray-100 border-gray-200 text-gray-900' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'"
+                  >
+                    Média
+                  </button>
+                </div>
+              </div>
+
+              <!-- busca dentro do histórico -->
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Filtrar cenários por nome..."
+                  [(ngModel)]="historySearchTerm"
+                  (input)="applyHistoryFilter()"
+                  class="flex-1 h-10 rounded-xl border border-gray-200 bg-white px-4 text-gray-800 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-gray-100"
+                />
+
+                <button
+                  type="button"
+                  (click)="refreshHistory()"
+                  class="h-10 px-3 rounded-xl bg-gray-900 text-white text-sm hover:bg-gray-700 transition-colors"
+                  title="Atualizar lista"
+                >
+                  Atualizar
+                </button>
+              </div>
+            </div>
+
+            <!-- corpo -->
+            <div class="flex-1 min-h-0 overflow-auto p-4">
+
+              <div *ngIf="historyLoading" class="text-sm text-gray-500">
+                Carregando históricos...
+              </div>
+
+              <ng-container *ngIf="!historyLoading">
+
+                <!-- vazio -->
+                <div
+                  *ngIf="visibleScenarios.length === 0"
+                  class="h-full flex items-center justify-center text-center"
+                >
+                  <div class="max-w-lg flex flex-col gap-2">
+                    <div class="text-gray-900 font-semibold">Nada por aqui</div>
+                    <div class="text-sm text-gray-500">
+                      <span *ngIf="activeTab==='saved'">Você ainda não tem cenários salvos (ou o filtro está muito restrito).</span>
+                      <span *ngIf="activeTab==='deleted'">Nenhum cenário deletado (soft delete só vale daqui pra frente).</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- lista -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3" *ngIf="visibleScenarios.length > 0">
+
+                  <div
+                    *ngFor="let s of visibleScenarios"
+                    class="group w-full rounded-2xl border border-gray-100 bg-white hover:bg-gray-50 transition-colors"
+                    [ngClass]="(activeTab==='saved' && selectedScenarioId===s.id) ? 'ring-2 ring-emerald-200' : ''"
+                  >
+                    <div class="flex items-center justify-between gap-3 px-4 py-3">
+
+                      <!-- clique no cenário salvo atualiza KPI -->
+                      <button
+                        type="button"
+                        class="text-left flex-1 min-w-0"
+                        [disabled]="activeTab!=='saved'"
+                        (click)="activeTab==='saved' ? selectScenario(s) : null"
+                        [title]="activeTab==='saved' ? 'Selecionar e atualizar KPIs' : 'Somente restaurar/excluir'"
+                      >
+                        <div class="flex items-center gap-2 min-w-0">
+                          <div class="text-sm font-semibold text-gray-900 truncate">
+                            {{ s.name }}
+                          </div>
+
+                          <span
+                            class="shrink-0 text-[10px] uppercase px-2 py-1 rounded-lg bg-gray-100 text-gray-600"
+                            [title]="s.scenarioType"
+                          >
+                            {{ s.scenarioType === 'recorrente' ? 'recorrente' : 'média' }}
+                          </span>
+                        </div>
+
+                        <div class="text-[11px] text-gray-500 truncate mt-0.5">
+                          {{ s.fileName }} • {{ s.salaryColumnKey || 'salário não definido' }}
+                        </div>
+
+                        <div class="text-[11px] text-gray-400 mt-0.5">
+                          Criado em {{ s.createdAt | date:'dd/MM ° HH:mm' }}
+                          <span *ngIf="s.deletedAt"> • Deletado em {{ s.deletedAt | date:'dd/MM ° HH:mm' }}</span>
+                        </div>
+                      </button>
+
+                      <!-- ações (só na aba deletados) -->
+                      <div *ngIf="activeTab==='deleted'" class="flex items-center gap-2">
+
+                        <button
+                          type="button"
+                          (click)="restoreScenario(s); $event.stopPropagation()"
+                          class="h-9 px-3 rounded-xl bg-gray-900 text-white text-sm hover:bg-gray-700 transition-colors"
+                          title="Restaurar"
+                        >
+                          Restaurar
+                        </button>
+
+                        <button
+                          type="button"
+                          (click)="permanentDeleteScenario(s); $event.stopPropagation()"
+                          class="h-9 px-3 rounded-xl text-sm transition-colors"
+                          title="Apagar definitivamente"
+                        >
+                          Excluir
+                        </button>
+
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+
+              </ng-container>
+            </div>
+
           </div>
         </div>
 

@@ -26,7 +26,9 @@ router.get("/", async (req, res) => {
          name_column_key AS "nameColumnKey",
          scenario_type AS "scenarioType"
        FROM ${TABLE}
-       WHERE user_id=$1 AND scenario_type=$2
+       WHERE user_id=$1
+         AND scenario_type=$2
+         AND deleted_at IS NULL
        ORDER BY created_at DESC
        LIMIT 50`,
       [userId, SCENARIO_TYPE]
@@ -64,7 +66,10 @@ router.get("/:id", async (req, res) => {
          rows,
          simulations
        FROM ${TABLE}
-       WHERE user_id=$1 AND id=$2 AND scenario_type=$3
+       WHERE user_id=$1
+         AND id=$2
+         AND scenario_type=$3
+         AND deleted_at IS NULL
        LIMIT 1`,
       [userId, id, SCENARIO_TYPE]
     );
@@ -121,7 +126,7 @@ router.post("/", async (req, res) => {
          file_name, active_view,
          area_column_key, role_column_key,
          salary_column_key, id_column_key, name_column_key,
-         scenario_type, data_columns, rows, simulations
+         scenario_type, data_columns, rows, simulations, deleted_at
        )
        VALUES (
          $1, $2, $3,
@@ -131,7 +136,8 @@ router.post("/", async (req, res) => {
          $7, $8,
          $9, $10, $11,
          $12,
-         $13::jsonb, $14::jsonb, $15::jsonb
+         $13::jsonb, $14::jsonb, $15::jsonb,
+         NULL
        )
        ON CONFLICT (user_id, id)
        DO UPDATE SET
@@ -185,15 +191,20 @@ router.post("/", async (req, res) => {
   }
 });
 
-// DELETE
+// DELETE (soft delete)
 router.delete("/:id", async (req, res) => {
   try {
     const userId = String(req.user?.sub ?? "");
     const id = String(req.params.id ?? "");
 
     const q = await pool.query(
-      `DELETE FROM ${TABLE}
-       WHERE user_id=$1 AND id=$2 AND scenario_type=$3`,
+      `UPDATE ${TABLE}
+       SET deleted_at = now(),
+           updated_at = now()
+       WHERE user_id=$1
+         AND id=$2
+         AND scenario_type=$3
+         AND deleted_at IS NULL`,
       [userId, id, SCENARIO_TYPE]
     );
 

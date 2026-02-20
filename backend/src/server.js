@@ -10,18 +10,24 @@ const scenariosRouter = require("./routes/scenarios");
 const scenariosRouterMedia = require("./routes/scenariosmedia");
 
 const app = express();
+
 const FRONTEND_ORIGIN =
   process.env.FRONTEND_ORIGIN || process.env.APP_URL || "http://localhost:4200";
 
-app.use(
-  cors({
-    origin: FRONTEND_ORIGIN,
-    allowedHeaders: ["Content-Type", "Authorization"],
-    methods: ["GET", "POST", "DELETE", "OPTIONS"],
-  })
-);
+const corsOptions = {
+  origin: FRONTEND_ORIGIN,
+  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "DELETE", "PATCH", "OPTIONS"],
+};
 
+// ✅ CORS PRIMEIRO
+app.use(cors(corsOptions));
+
+// ✅ body depois
 app.use(express.json({ limit: "25mb" }));
+
+// ✅ rotas depois do CORS
+app.use("/simulador_de_gastos/historicos", require("./routes/historicos"));
 app.use("/simulacao_recorrente", scenariosRouter);
 app.use("/simulacao_media", scenariosRouterMedia);
 
