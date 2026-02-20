@@ -120,9 +120,10 @@ export class SimulacaomediaComponent implements AfterViewInit, OnDestroy {
 
   menu: MenuItem[] = [
     { key: 'home', title: 'Menu Principal', route: '/simulador_de_gastos', imagePath: '/inicio.svg' },
-    { key: 'results', title: 'Resultados', route: '/simulador_de_gastos/resultados', imagePath: '/badge-dollar-sign.svg' },
     { key: 'history', title: 'Históricos', route: '/simulador_de_gastos/historicos', imagePath: '/history.svg' },
-    { key: 'settings', title: 'Configurações', route: '/simulador_de_gastos/configuracoes', imagePath: '/settings.svg' }
+    { key: 'simulacao_recorrente', title: 'Recorrente', route: '/simulador_de_gastos/simulacao_recorrente', imagePath: '/calculator.svg' },
+    { key: 'simulacao_medio', title: 'Cálculo Médio', route: '/simulador_de_gastos/simulacao_medio', imagePath: '/hand-coins.svg' },
+    { key: 'settings', title: 'Configurações', route: '/simulador_de_gastos/configuracoes', imagePath: '/settings.svg' },
   ];
   orderedMenu: MenuItem[] = [...this.menu];
 

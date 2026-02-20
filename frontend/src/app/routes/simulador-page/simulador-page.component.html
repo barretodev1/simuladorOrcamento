@@ -41,7 +41,7 @@
       </div>
 
       <!-- menu -->
-      <div class="mt-4 flex flex-col flex-1 min-h-0 overflow-hidden w-full">
+      <div class="mt-4 flex flex-col flex-1 min-h-0 overflow-y-auto w-full pr-1">
         <app-menu-options
           *ngFor="let item of orderedMenu; trackBy: trackByKey"
           [imagePath]="item.imagePath"

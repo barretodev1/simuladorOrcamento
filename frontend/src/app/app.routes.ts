@@ -4,7 +4,6 @@ import { HomeComponent } from './routes/home/home.component';
 import { SimuladorPageComponent } from './routes/simulador-page/simulador-page.component';
 import { PasswordComponent } from './routes/password/password.component';
 import { authGuard } from './auth/auth.guard';
-import { ResultadosComponent } from './routes/resultados/resultados.component';
 import { HistoricoComponent } from './routes/historico/historico.component';
 import { ConfiguracoesComponent } from './routes/configuracoes/configuracoes.component';
 import { SimulacaorecorrenteComponent } from './routes/simulacaorecorrente/simulacaorecorrente.component';
@@ -18,12 +17,6 @@ export const routes: Routes = [
         canActivate: [authGuard],
         loadComponent: () =>
             import('./routes/simulador-page/simulador-page.component').then(m => m.SimuladorPageComponent),
-    },
-    {
-        path: 'simulador_de_gastos/resultados',
-        canActivate: [authGuard],
-        loadComponent: () =>
-            import('./routes/resultados/resultados.component').then(m => m.ResultadosComponent),
     },
     {
         path: 'simulador_de_gastos/historicos',
