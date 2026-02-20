@@ -27,6 +27,14 @@ export type ColumnDef = {
   width: number;
 };
 
+// ✅ Linhas das simulações (o que você “fez” na tela)
+export type SimulationRow = {
+  area: string;                     // área escolhida/derivada
+  role: string;                     // cargo (role = cargo)
+  type: 'ADMISSAO' | 'DEMISSAO';    // tipo
+  qty: number;                      // quantidade
+};
+
 // Resumo p/ sidebar
 export type SavedScenarioSummary = {
   id: string;
@@ -34,6 +42,7 @@ export type SavedScenarioSummary = {
   createdAt: number;
   fileName: string;
   activeView: ActiveView;
+
   salaryColumnKey: string;
   idColumnKey: string;
   nameColumnKey: string;
@@ -43,4 +52,11 @@ export type SavedScenarioSummary = {
 export type SavedScenario = SavedScenarioSummary & {
   dataColumns: ColumnDef[];
   rows: CsvRow[];
+
+  // ✅ colunas que o usuário “marcou” como Área e Cargo
+  areaColumnKey: string;
+  roleColumnKey: string;
+
+  // ✅ simulações feitas
+  simulations: SimulationRow[];
 };

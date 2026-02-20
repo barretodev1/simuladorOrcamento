@@ -51,12 +51,18 @@ router.get("/:id", async (req, res) => {
          EXTRACT(EPOCH FROM created_at)*1000 AS "createdAt",
          file_name AS "fileName",
          active_view AS "activeView",
+
+         area_column_key AS "areaColumnKey",
+         role_column_key AS "roleColumnKey",
+
          salary_column_key AS "salaryColumnKey",
          id_column_key AS "idColumnKey",
          name_column_key AS "nameColumnKey",
          scenario_type AS "scenarioType",
+
          data_columns AS "dataColumns",
-         rows
+         rows,
+         simulations
        FROM ${TABLE}
        WHERE user_id=$1 AND id=$2 AND scenario_type=$3
        LIMIT 1`,
@@ -85,11 +91,17 @@ router.post("/", async (req, res) => {
     const name = String(s.name ?? "").trim();
     const fileName = String(s.fileName ?? "base.csv");
     const activeView = String(s.activeView ?? "area");
+
+    const areaColumnKey = String(s.areaColumnKey ?? "");
+    const roleColumnKey = String(s.roleColumnKey ?? "");
+
     const salaryColumnKey = String(s.salaryColumnKey ?? "");
     const idColumnKey = String(s.idColumnKey ?? "");
     const nameColumnKey = String(s.nameColumnKey ?? "");
+
     const dataColumns = s.dataColumns ?? [];
     const rows = s.rows ?? [];
+    const simulations = Array.isArray(s.simulations) ? s.simulations : [];
 
     if (!id || !name) return res.status(400).json({ message: "id e name são obrigatórios." });
     if (activeView !== "area" && activeView !== "empresa") {
@@ -106,16 +118,20 @@ router.post("/", async (req, res) => {
     const q = await pool.query(
       `INSERT INTO ${TABLE} (
          user_id, id, name, created_at, updated_at,
-         file_name, active_view, salary_column_key, id_column_key, name_column_key,
-         scenario_type, data_columns, rows
+         file_name, active_view,
+         area_column_key, role_column_key,
+         salary_column_key, id_column_key, name_column_key,
+         scenario_type, data_columns, rows, simulations
        )
        VALUES (
          $1, $2, $3,
          COALESCE($4::timestamptz, now()),
          now(),
-         $5, $6, $7, $8, $9,
-         $10,
-         $11::jsonb, $12::jsonb
+         $5, $6,
+         $7, $8,
+         $9, $10, $11,
+         $12,
+         $13::jsonb, $14::jsonb, $15::jsonb
        )
        ON CONFLICT (user_id, id)
        DO UPDATE SET
@@ -123,18 +139,23 @@ router.post("/", async (req, res) => {
          updated_at = now(),
          file_name = EXCLUDED.file_name,
          active_view = EXCLUDED.active_view,
+         area_column_key = EXCLUDED.area_column_key,
+         role_column_key = EXCLUDED.role_column_key,
          salary_column_key = EXCLUDED.salary_column_key,
          id_column_key = EXCLUDED.id_column_key,
          name_column_key = EXCLUDED.name_column_key,
          scenario_type = EXCLUDED.scenario_type,
          data_columns = EXCLUDED.data_columns,
-         rows = EXCLUDED.rows
+         rows = EXCLUDED.rows,
+         simulations = EXCLUDED.simulations
        RETURNING
          id,
          name,
          EXTRACT(EPOCH FROM created_at)*1000 AS "createdAt",
          file_name AS "fileName",
          active_view AS "activeView",
+         area_column_key AS "areaColumnKey",
+         role_column_key AS "roleColumnKey",
          salary_column_key AS "salaryColumnKey",
          id_column_key AS "idColumnKey",
          name_column_key AS "nameColumnKey",
@@ -146,12 +167,15 @@ router.post("/", async (req, res) => {
         createdAtSql,
         fileName,
         activeView,
+        areaColumnKey,
+        roleColumnKey,
         salaryColumnKey,
         idColumnKey,
         nameColumnKey,
         SCENARIO_TYPE,
         JSON.stringify(dataColumns),
         JSON.stringify(rows),
+        JSON.stringify(simulations),
       ]
     );
 

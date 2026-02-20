@@ -112,18 +112,27 @@ export class ScenarioApiService {
       nameColumnKey: String(s.nameColumnKey || ''),
       dataColumns: Array.isArray(s.dataColumns) ? s.dataColumns : [],
       rows: Array.isArray(s.rows) ? s.rows : [],
+
+      // ✅ NOVOS CAMPOS
+      areaColumnKey: String(s.areaColumnKey || ''),
+      roleColumnKey: String(s.roleColumnKey || ''),
+      simulations: Array.isArray(s.simulations) ? s.simulations : [],
     };
 
     return { ...s, ...base } as any;
   }
 
   async upsert(scenario: SavedScenario & any): Promise<SavedScenarioSummary> {
-    const body = {
-      scenario: {
-        ...scenario,
-        scenarioType: scenario.scenarioType || 'media',
-      },
+    // ✅ garante defaults (pra não mandar undefined)
+    const safeScenario = {
+      ...scenario,
+      scenarioType: scenario.scenarioType || 'media',
+      areaColumnKey: scenario.areaColumnKey || '',
+      roleColumnKey: scenario.roleColumnKey || '',
+      simulations: Array.isArray(scenario.simulations) ? scenario.simulations : [],
     };
+
+    const body = { scenario: safeScenario };
 
     const data = await this.request<any>(`${ROUTE_BASE}`, {
       method: 'POST',
