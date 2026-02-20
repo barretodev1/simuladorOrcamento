@@ -8,6 +8,7 @@ const pool = require("./db");
 const { sendEmail } = require("./mailer");
 const scenariosRouter = require("./routes/scenarios");
 const scenariosRouterMedia = require("./routes/scenariosmedia");
+const accountRouter = require("./routes/account");
 
 const app = express();
 
@@ -17,7 +18,7 @@ const FRONTEND_ORIGIN =
 const corsOptions = {
   origin: FRONTEND_ORIGIN,
   allowedHeaders: ["Content-Type", "Authorization"],
-  methods: ["GET", "POST", "DELETE", "PATCH", "OPTIONS"],
+  methods: ["GET", "POST", "DELETE", "PATCH", "PUT", "OPTIONS"],
 };
 
 // ✅ CORS PRIMEIRO
@@ -30,6 +31,8 @@ app.use(express.json({ limit: "25mb" }));
 app.use("/simulador_de_gastos/historicos", require("./routes/historicos"));
 app.use("/simulacao_recorrente", scenariosRouter);
 app.use("/simulacao_media", scenariosRouterMedia);
+app.use("/auth", accountRouter);
+
 
 
 // Resend (se não tiver key, funciona em modo dev logando o código)

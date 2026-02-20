@@ -63,15 +63,162 @@
 
     <!-- ÁREA DE CONTEÚDO -->
     <div class="flex-1 bg-white rounded-t-3xl overflow-hidden min-h-0">
-      <div class="h-full min-h-0 flex flex-col gap-4 p-4">
+      <div class="h-full min-h-0 flex flex-col gap-4 p-6 overflow-auto">
 
-        <div class="shrink-0">
-          <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            <app-kpi-card title="HC Atual" subLine="HC da última base atualizada"></app-kpi-card>
-            <app-kpi-card title="Total Mensal" subLine="Custo Folha - Mensal"></app-kpi-card>
-            <app-kpi-card title="Custo Médio | HC" subLine="Ticket Médio por Headcount"></app-kpi-card>
-            <app-kpi-card title="Projeção Anual" subLine="Forecast de Gastos"></app-kpi-card>
+        <!-- topo -->
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900">Configurações</h2>
+            <p class="text-sm text-gray-500">Gerencie seus dados e segurança da conta.</p>
           </div>
+
+          <button
+            type="button"
+            (click)="logout()"
+            class="h-10 px-4 rounded-xl bg-gray-900 text-white hover:bg-gray-700"
+          >
+            Sair
+          </button>
+        </div>
+
+        <!-- mensagens -->
+        <div *ngIf="successMsg" class="w-full rounded-xl bg-green-50 border border-green-200 p-3 text-sm text-green-700">
+          {{ successMsg }}
+        </div>
+
+        <div *ngIf="errorMsg" class="w-full rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+          {{ errorMsg }}
+        </div>
+
+        <!-- loading -->
+        <div *ngIf="loadingMe" class="w-full rounded-2xl border border-gray-200 p-4">
+          <p class="text-sm text-gray-600">Carregando seus dados...</p>
+        </div>
+
+        <!-- PERFIL -->
+        <div class="w-full rounded-2xl border border-gray-200 p-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-gray-900">Perfil</h3>
+            <span class="text-xs text-gray-500">Atualize seus dados</span>
+          </div>
+
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-gray-500">Nome</label>
+              <input
+                [(ngModel)]="formName"
+                type="text"
+                class="mt-1 w-full h-10 rounded-xl bg-gray-100 px-4 text-gray-800 outline-none focus:bg-white border border-transparent focus:border-gray-300"
+                placeholder="Seu nome"
+              />
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-500">Email</label>
+              <input
+                [(ngModel)]="formEmail"
+                type="email"
+                class="mt-1 w-full h-10 rounded-xl bg-gray-100 px-4 text-gray-800 outline-none focus:bg-white border border-transparent focus:border-gray-300"
+                placeholder="seuemail@dominio.com"
+              />
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              (click)="loadMe()"
+              class="h-10 px-4 rounded-xl bg-gray-100 text-gray-800 hover:bg-gray-200"
+            >
+              Recarregar
+            </button>
+
+            <button
+              type="button"
+              (click)="saveProfile()"
+              [disabled]="savingProfile"
+              class="h-10 px-4 rounded-xl bg-gray-900 text-white hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {{ savingProfile ? 'Salvando...' : 'Salvar alterações' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- SEGURANÇA -->
+        <div class="w-full rounded-2xl border border-gray-200 p-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-gray-900">Segurança</h3>
+            <span class="text-xs text-gray-500">Troca de senha</span>
+          </div>
+
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="text-xs text-gray-500">Senha atual</label>
+              <input
+                [(ngModel)]="currentPassword"
+                type="password"
+                class="mt-1 w-full h-10 rounded-xl bg-gray-100 px-4 text-gray-800 outline-none focus:bg-white border border-transparent focus:border-gray-300"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-500">Nova senha</label>
+              <input
+                [(ngModel)]="newPassword"
+                type="password"
+                class="mt-1 w-full h-10 rounded-xl bg-gray-100 px-4 text-gray-800 outline-none focus:bg-white border border-transparent focus:border-gray-300"
+                placeholder="mínimo 6 caracteres"
+              />
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-500">Confirmar nova senha</label>
+              <input
+                [(ngModel)]="confirmNewPassword"
+                type="password"
+                class="mt-1 w-full h-10 rounded-xl bg-gray-100 px-4 text-gray-800 outline-none focus:bg-white border border-transparent focus:border-gray-300"
+                placeholder="repita a nova senha"
+              />
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-end">
+            <button
+              type="button"
+              (click)="savePassword()"
+              [disabled]="savingPassword"
+              class="h-10 px-4 rounded-xl bg-gray-900 text-white hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {{ savingPassword ? 'Salvando...' : 'Atualizar senha' }}
+            </button>
+          </div>
+
+          <p class="mt-3 text-xs text-gray-500">
+            Dica: use uma senha forte e evite reutilizar senhas antigas.
+          </p>
+        </div>
+
+        <!-- PREFERÊNCIAS (local only, opcional) -->
+        <div class="w-full rounded-2xl border border-gray-200 p-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-gray-900">Preferências</h3>
+            <span class="text-xs text-gray-500">Interface</span>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <div>
+              <p class="text-sm font-medium text-gray-900">Mostrar dicas e atalhos</p>
+              <p class="text-xs text-gray-500">Ajuda rápida dentro do sistema (salvo no navegador).</p>
+            </div>
+
+            <!-- toggle simples (só UI por enquanto) -->
+            <div class="h-6 w-11 rounded-full bg-gray-300"></div>
+          </div>
+
+          <p class="mt-3 text-xs text-gray-500">
+            Se quiser, eu implemento essas preferências salvando no banco (por usuário).
+          </p>
         </div>
 
       </div>

@@ -1,11 +1,11 @@
 const jwt = require("jsonwebtoken");
 
-function requireAuth(req, res, next) {
+module.exports = function requireAuth(req, res, next) {
   try {
     const header = req.headers.authorization || "";
-    const [type, token] = header.split(" ");
+    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
-    if (type !== "Bearer" || !token) {
+    if (!token) {
       return res.status(401).json({ message: "Token ausente." });
     }
 
@@ -14,11 +14,14 @@ function requireAuth(req, res, next) {
     }
 
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = payload; // { sub, email, iat, exp ... }
+
+    // payload do seu login: { sub: user.id, email: user.email }
+    req.user = payload;
+    req.userId = payload.sub;
+    req.userEmail = payload.email;
+
     return next();
   } catch (e) {
     return res.status(401).json({ message: "Token inválido ou expirado." });
   }
-}
-
-module.exports = requireAuth;
+};

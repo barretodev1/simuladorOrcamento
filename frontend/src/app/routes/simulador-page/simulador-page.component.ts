@@ -2,7 +2,6 @@ import { MenuOptionsComponent } from '@/components/menu-options/menu-options.com
 import { Component, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { KpiCardComponent } from '@/components/kpi-card/kpi-card.component';
 import { CardSimulatorComponent } from '@/components/card-simulator/card-simulator.component';
 import { AuthService } from '@/auth/auth.service';
 
@@ -16,7 +15,7 @@ type MenuItem = {
 @Component({
   standalone: true,
   selector: 'app-simulador-page',
-  imports: [CommonModule, FormsModule, MenuOptionsComponent, KpiCardComponent, CardSimulatorComponent],
+  imports: [CommonModule, FormsModule, MenuOptionsComponent, CardSimulatorComponent],
   templateUrl: './simulador-page.component.html',
 })
 export class SimuladorPageComponent {
