@@ -1,44 +1,96 @@
 require("dotenv").config();
+
+const path = require("path");
+const fs = require("fs");
+
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { Resend } = require("resend");
+
 const pool = require("./db");
 const { sendEmail } = require("./mailer");
+
 const scenariosRouter = require("./routes/scenarios");
 const scenariosRouterMedia = require("./routes/scenariosmedia");
 const accountRouter = require("./routes/account");
 
 const app = express();
+app.set("trust proxy", 1);
 
-const FRONTEND_ORIGIN =
-  process.env.FRONTEND_ORIGIN || process.env.APP_URL || "http://localhost:4200";
+const isProd = process.env.NODE_ENV === "production";
+const PORT = Number(process.env.PORT) || 3000;
+
+// ==========================
+// CORS (deploy-friendly)
+// ==========================
+/**
+ * - Se você subir FRONT + API juntos (mesmo host), pode deixar FRONTEND_ORIGIN vazio -> libera.
+ * - Se separar, set:
+ *   FRONTEND_ORIGIN="https://seufront.com,https://www.seufront.com"
+ */
+const rawOrigins = (process.env.FRONTEND_ORIGIN || process.env.APP_URL || "").trim();
+const allowedOrigins = rawOrigins
+  ? rawOrigins.split(",").map((s) => s.trim()).filter(Boolean)
+  : (isProd ? [] : ["http://localhost:4200"]);
 
 const corsOptions = {
-  origin: FRONTEND_ORIGIN,
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true); // curl/postman/server-to-server
+    if (allowedOrigins.length === 0) return cb(null, true); // single-host
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error(`CORS bloqueado para: ${origin}`));
+  },
   allowedHeaders: ["Content-Type", "Authorization"],
   methods: ["GET", "POST", "DELETE", "PATCH", "PUT", "OPTIONS"],
 };
 
-// ✅ CORS PRIMEIRO
 app.use(cors(corsOptions));
+// ⚠️ Express/router novo não aceita "*" / "/*" => usar RegExp
+app.options(/.*/, cors(corsOptions));
 
-// ✅ body depois
 app.use(express.json({ limit: "25mb" }));
 
-// ✅ rotas depois do CORS
-app.use("/simulador_de_gastos/historicos", require("./routes/historicos"));
-app.use("/simulacao_recorrente", scenariosRouter);
-app.use("/simulacao_media", scenariosRouterMedia);
-app.use("/auth", accountRouter);
+// ==========================
+// Helpers p/ não duplicar rotas
+// ==========================
+const API_PREFIX = "/api";
 
+const mountBoth = (basePath, router) => {
+  app.use(basePath, router);
+  app.use(`${API_PREFIX}${basePath}`, router);
+};
 
+const getBoth = (routePath, handler) => {
+  app.get(routePath, handler);
+  app.get(`${API_PREFIX}${routePath}`, handler);
+};
 
-// Resend (se não tiver key, funciona em modo dev logando o código)
+const postBoth = (routePath, handler) => {
+  app.post(routePath, handler);
+  app.post(`${API_PREFIX}${routePath}`, handler);
+};
+
+const patchBoth = (routePath, handler) => {
+  app.patch(routePath, handler);
+  app.patch(`${API_PREFIX}${routePath}`, handler);
+};
+
+// ==========================
+// ROTAS (routers) - com alias /api
+// ==========================
+mountBoth("/simulador_de_gastos/historicos", require("./routes/historicos"));
+mountBoth("/simulacao_recorrente", scenariosRouter);
+mountBoth("/simulacao_media", scenariosRouterMedia);
+
+// (router de account/me/change-password etc.)
+mountBoth("/auth", accountRouter);
+
+// ==========================
+// Resend + secrets
+// ==========================
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-
-// Segredo do token de reset (recomendado separado)
 const RESET_SECRET = process.env.RESET_JWT_SECRET || process.env.JWT_SECRET;
 
 function generate6DigitCode() {
@@ -55,10 +107,8 @@ async function sendRecoveryEmail(toEmail, code) {
       <p>Esse código expira em 10 minutos.</p>
     </div>
   `;
-
   await sendEmail({ to: toEmail, subject, html });
 }
-
 
 async function sendRegisterEmail(toEmail, code) {
   const subject = "Código para confirmar seu cadastro";
@@ -86,11 +136,10 @@ async function sendRegisterEmail(toEmail, code) {
   await sendEmail({ to: toEmail, subject, html });
 }
 
-
 // ==========================
-// HEALTHCHECK
+// HEALTHCHECK (com alias /api/health)
 // ==========================
-app.get("/health", async (req, res) => {
+getBoth("/health", async (req, res) => {
   try {
     const r = await pool.query("SELECT 1 as ok");
     res.json({ ok: true, db: r.rows[0].ok === 1 });
@@ -104,9 +153,9 @@ app.get("/health", async (req, res) => {
 });
 
 // ==========================
-// AUTH - REGISTER
+// AUTH - REGISTER (com alias /api/auth/*)
 // ==========================
-app.post("/auth/register", async (req, res) => {
+postBoth("/auth/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -136,9 +185,9 @@ app.post("/auth/register", async (req, res) => {
 });
 
 // ==========================
-// AUTH - LOGIN
+// AUTH - LOGIN (com alias /api/auth/*)
 // ==========================
-app.post("/auth/login", async (req, res) => {
+postBoth("/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -162,11 +211,9 @@ app.post("/auth/login", async (req, res) => {
       return res.status(401).json({ message: "Dados incorretos." });
     }
 
-    const token = jwt.sign(
-      { sub: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "2h" }
-    );
+    const token = jwt.sign({ sub: user.id, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "2h",
+    });
 
     return res.json({
       token,
@@ -183,7 +230,7 @@ app.post("/auth/login", async (req, res) => {
 // ==========================
 
 // 1) Envia código para confirmar cadastro
-app.post("/auth/register/send-code", async (req, res) => {
+postBoth("/auth/register/send-code", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -194,13 +241,11 @@ app.post("/auth/register/send-code", async (req, res) => {
       return res.status(400).json({ message: "Senha deve ter no mínimo 6 caracteres." });
     }
 
-    // já existe user?
     const exists = await pool.query("SELECT id FROM public.users WHERE email=$1", [email]);
     if (exists.rowCount > 0) {
       return res.status(409).json({ message: "Email já cadastrado. Faça login." });
     }
 
-    // anti-spam simples: 1 envio por minuto
     const last = await pool.query(
       `SELECT created_at
        FROM public.register_verification_codes
@@ -237,7 +282,7 @@ app.post("/auth/register/send-code", async (req, res) => {
 });
 
 // 2) Verifica código e cria o usuário
-app.post("/auth/register/verify-code", async (req, res) => {
+postBoth("/auth/register/verify-code", async (req, res) => {
   const client = await pool.connect();
   try {
     const { email, code } = req.body;
@@ -283,7 +328,6 @@ app.post("/auth/register/verify-code", async (req, res) => {
 
     await client.query("BEGIN");
 
-    // se alguém criou nesse meio tempo, bloqueia
     const exists = await client.query("SELECT id FROM public.users WHERE email=$1", [email]);
     if (exists.rowCount > 0) {
       await client.query(
@@ -295,7 +339,6 @@ app.post("/auth/register/verify-code", async (req, res) => {
       return res.status(409).json({ message: "Esse email já foi cadastrado. Faça login." });
     }
 
-    // cria usuário com os dados pendentes
     const result = await client.query(
       `INSERT INTO public.users (name, email, password_hash)
        VALUES ($1,$2,$3)
@@ -303,7 +346,6 @@ app.post("/auth/register/verify-code", async (req, res) => {
       [rec.name, rec.email, rec.password_hash]
     );
 
-    // consome o código
     await client.query(
       `UPDATE public.register_verification_codes
        SET verified_at = now(), consumed_at = now(), attempts = attempts + 1
@@ -323,13 +365,12 @@ app.post("/auth/register/verify-code", async (req, res) => {
   }
 });
 
-
 // ==========================
 // RECUPERAÇÃO DE SENHA
 // ==========================
 
-// 1) Enviar código (valida se email existe no banco)
-app.post("/auth/recovery/send-code", async (req, res) => {
+// 1) Enviar código
+postBoth("/auth/recovery/send-code", async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email é obrigatório." });
@@ -342,7 +383,6 @@ app.post("/auth/recovery/send-code", async (req, res) => {
       });
     }
 
-    // anti-spam simples: 1 envio por minuto
     const last = await pool.query(
       `SELECT created_at
        FROM public.password_recovery_codes
@@ -355,9 +395,7 @@ app.post("/auth/recovery/send-code", async (req, res) => {
     if (last.rowCount > 0) {
       const lastDate = new Date(last.rows[0].created_at);
       if (Date.now() - lastDate.getTime() < 60_000) {
-        return res.status(429).json({
-          message: "Aguarde um pouco antes de solicitar outro código.",
-        });
+        return res.status(429).json({ message: "Aguarde um pouco antes de solicitar outro código." });
       }
     }
 
@@ -380,8 +418,8 @@ app.post("/auth/recovery/send-code", async (req, res) => {
   }
 });
 
-// 2) Verificar código -> devolve resetToken
-app.post("/auth/recovery/verify-code", async (req, res) => {
+// 2) Verificar código -> resetToken
+postBoth("/auth/recovery/verify-code", async (req, res) => {
   try {
     const { email, code } = req.body;
     if (!email || !code) {
@@ -398,9 +436,7 @@ app.post("/auth/recovery/verify-code", async (req, res) => {
     );
 
     if (recQ.rowCount === 0) {
-      return res.status(404).json({
-        message: "Nenhum código ativo encontrado. Solicite um novo.",
-      });
+      return res.status(404).json({ message: "Nenhum código ativo encontrado. Solicite um novo." });
     }
 
     const rec = recQ.rows[0];
@@ -422,11 +458,9 @@ app.post("/auth/recovery/verify-code", async (req, res) => {
          WHERE id=$1`,
         [rec.id]
       );
-
       return res.status(401).json({ message: "Código incorreto. Confira e tente novamente." });
     }
 
-    // marca como verificado
     await pool.query(
       `UPDATE public.password_recovery_codes
        SET verified_at = now(), attempts = attempts + 1
@@ -447,8 +481,8 @@ app.post("/auth/recovery/verify-code", async (req, res) => {
   }
 });
 
-// 3) Trocar senha usando resetToken
-app.post("/auth/recovery/reset-password", async (req, res) => {
+// 3) Trocar senha
+postBoth("/auth/recovery/reset-password", async (req, res) => {
   try {
     const { email, resetToken, newPassword } = req.body;
 
@@ -493,10 +527,9 @@ app.post("/auth/recovery/reset-password", async (req, res) => {
       rec.user_id,
     ]);
 
-    await pool.query(
-      "UPDATE public.password_recovery_codes SET consumed_at = now() WHERE id=$1",
-      [rec.id]
-    );
+    await pool.query("UPDATE public.password_recovery_codes SET consumed_at = now() WHERE id=$1", [
+      rec.id,
+    ]);
 
     return res.json({ ok: true, message: "Senha atualizada com sucesso." });
   } catch (e) {
@@ -505,6 +538,49 @@ app.post("/auth/recovery/reset-password", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log(`API rodando em http://localhost:${process.env.PORT || 3000}`);
+// ==========================
+// SERVIR ANGULAR EM PRODUÇÃO (SPA fallback)
+// ==========================
+function resolveAngularDist() {
+  if (process.env.ANGULAR_DIST) return path.resolve(process.env.ANGULAR_DIST);
+
+  const candidates = [
+    path.join(__dirname, "../../frontend/dist/simuladorOrcamento"), // se server.js está em backend/src
+    path.join(__dirname, "../frontend/dist/simuladorOrcamento"),    // se server.js está em backend/
+    path.join(process.cwd(), "frontend", "dist", "simuladorOrcamento"),
+  ];
+
+  const found = candidates.find((p) => fs.existsSync(p));
+  return found || candidates[0];
+}
+
+if (isProd) {
+  const distPath = resolveAngularDist();
+
+  app.use(express.static(distPath));
+
+  // não engolir API e assets
+  const apiBlock = /^(\/api\/|\/auth|\/simulacao_media|\/simulacao_recorrente|\/simulador_de_gastos|\/health)(\/|$)/;
+
+  // router novo: usar RegExp em vez de "*"
+  app.get(/.*/, (req, res) => {
+    if (apiBlock.test(req.path)) {
+      return res.status(404).json({ message: "Rota não encontrada." });
+    }
+    return res.sendFile(path.join(distPath, "index.html"));
+  });
+}
+
+// ==========================
+// ERROS
+// ==========================
+app.use((err, req, res, next) => {
+  if (err && typeof err.message === "string" && err.message.startsWith("CORS bloqueado")) {
+    return res.status(403).json({ message: err.message });
+  }
+  return next(err);
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`API rodando na porta ${PORT} (NODE_ENV=${process.env.NODE_ENV || "dev"})`);
 });
