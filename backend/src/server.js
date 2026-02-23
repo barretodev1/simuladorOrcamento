@@ -129,16 +129,11 @@ async function sendRegisterEmail(toEmail, code) {
       subject,
       html,
     });
-    console.log("[RESEND RESPONSE]", resp);
-
-    if (resp?.error) {
-      throw new Error(resp.error.message || JSON.stringify(resp.error));
-    }
-
-    return resp;
+    return;
   }
 
-  return await sendEmail({ to: toEmail, subject, html });
+  // 2) fallback: SMTP (nodemailer)
+  await sendEmail({ to: toEmail, subject, html });
 }
 
 // ==========================
@@ -282,7 +277,6 @@ postBoth("/auth/register/send-code", async (req, res) => {
     return res.json({ ok: true, message: "Código enviado para o email." });
   } catch (e) {
     console.error("REGISTER SEND-CODE ERROR:", e);
-    console.error("STACK:", e.stack);
     return res.status(500).json({ message: "Erro ao enviar código.", detail: e.message });
   }
 });
@@ -363,7 +357,7 @@ postBoth("/auth/register/verify-code", async (req, res) => {
 
     return res.json({ ok: true, user: result.rows[0] });
   } catch (e) {
-    try { await client.query("ROLLBACK"); } catch { }
+    try { await client.query("ROLLBACK"); } catch {}
     console.error("REGISTER VERIFY-CODE ERROR:", e);
     return res.status(500).json({ message: "Erro ao validar código.", detail: e.message });
   } finally {
