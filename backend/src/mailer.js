@@ -1,4 +1,10 @@
 const nodemailer = require("nodemailer");
+const dns = require("dns");
+
+// força preferência por IPv4 (ajuda em hosts que falham com IPv6)
+try {
+  dns.setDefaultResultOrder("ipv4first");
+} catch (_) {}
 
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = (process.env.SMTP_PASS || "").replace(/\s+/g, ""); // remove espaços
@@ -11,12 +17,25 @@ if (!SMTP_USER || !SMTP_PASS) {
 const transporter =
   SMTP_USER && SMTP_PASS
     ? nodemailer.createTransport({
-        service: "gmail",
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
+        host: "smtp.gmail.com",
+        port: 587,            // STARTTLS (melhor que 465 pro seu caso)
+        secure: false,        // false na 587
+        requireTLS: true,
+        auth: {
+          user: SMTP_USER,
+          pass: SMTP_PASS,
+        },
+        tls: {
+          servername: "smtp.gmail.com",
+        },
+        family: 4,            // força IPv4 na conexão
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 20000,
       })
     : null;
 
-// teste opcional ao iniciar (ajuda muito no Render)
+// teste de conexão ao subir (aparece no log do Render)
 (async () => {
   if (!transporter) return;
   try {
