@@ -7,7 +7,6 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { Resend } = require("resend");
 
 const pool = require("./db");
 const { sendEmail } = require("./mailer");
@@ -90,7 +89,6 @@ mountBoth("/auth", accountRouter);
 // ==========================
 // Resend + secrets
 // ==========================
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const RESET_SECRET = process.env.RESET_JWT_SECRET || process.env.JWT_SECRET;
 
 function generate6DigitCode() {
@@ -121,18 +119,6 @@ async function sendRegisterEmail(toEmail, code) {
     </div>
   `;
 
-  // 1) tenta Resend se estiver configurado
-  if (resend && process.env.MAIL_FROM) {
-    await resend.emails.send({
-      from: process.env.MAIL_FROM,
-      to: [toEmail],
-      subject,
-      html,
-    });
-    return;
-  }
-
-  // 2) fallback: SMTP (nodemailer)
   await sendEmail({ to: toEmail, subject, html });
 }
 
