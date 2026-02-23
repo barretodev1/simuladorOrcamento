@@ -33,7 +33,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const rawOrigins = (process.env.FRONTEND_ORIGIN || process.env.APP_URL || "").trim();
 const allowedOrigins = rawOrigins
   ? rawOrigins.split(",").map((s) => s.trim()).filter(Boolean)
-  : (isProd ? [] : ["http://localhost:4200"]);
+  : (isProd ? [] : ["https://simulador-orcamento.netlify.app"]);
 
 const corsOptions = {
   origin: (origin, cb) => {
