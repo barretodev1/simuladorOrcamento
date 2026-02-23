@@ -2,7 +2,7 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from '@/auth/auth.service';
 
-const API_BASE = 'https://simuladororcamento.onrender.com';
+const API_BASE = 'https://circular-rosabella-simuladorrecorrente-37ed6b38.koyeb.app/';
 const ROUTE_BASE = '/simulador_de_gastos/historicos';
 
 export type ScenarioType = 'recorrente' | 'media';

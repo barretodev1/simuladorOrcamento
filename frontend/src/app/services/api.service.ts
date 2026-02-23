@@ -8,7 +8,7 @@ type UpdateMeResponse = { user: { id: string; name: string; email: string }; tok
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
-  private API_URL = 'https://simuladororcamento.onrender.com';
+  private API_URL = 'https://circular-rosabella-simuladorrecorrente-37ed6b38.koyeb.app/';
 
   // ===== helpers =====
   private getToken(): string | null {
