@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from '@/auth/auth.service';
 import { SavedScenario, SavedScenarioSummary } from '../simulacaomedia/simulacaomedia.types.component';
 
-const API_BASE = 'https://circular-rosabella-simuladorrecorrente-37ed6b38.koyeb.app/';
+const API_BASE = 'https://circular-rosabella-simuladorrecorrente-37ed6b38.koyeb.app';
 const ROUTE_BASE = '/simulacao_media';
 
 export class ApiHttpError extends Error {
